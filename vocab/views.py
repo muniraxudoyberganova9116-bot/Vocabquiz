@@ -53,7 +53,35 @@ def logout_user(request):
 
 
 def home(request):
-    return render(request, 'vocab/index.html')
+    context = {}
+    if request.user.is_authenticated:
+        profile = _get_or_create_profile(request.user)
+        progress_qs = (
+            UnitProgress.objects
+            .filter(user=request.user)
+            .select_related('unit')
+            .order_by('-id')
+        )
+        progress_list = list(progress_qs)
+        completed = sum(1 for p in progress_list if p.is_completed)
+        total_units = Unit.objects.count()
+
+        last_progress = progress_list[0] if progress_list else None
+        next_unit = (
+            Unit.objects
+            .exclude(id__in=[p.unit_id for p in progress_list if p.is_completed])
+            .first()
+        )
+        resume_unit = last_progress.unit if last_progress else next_unit
+
+        context.update({
+            'profile': profile,
+            'completed_units': completed,
+            'total_units': total_units,
+            'resume_unit': resume_unit,
+            'last_progress': last_progress,
+        })
+    return render(request, 'vocab/index.html', context)
 
 
 @login_required(login_url='login')
