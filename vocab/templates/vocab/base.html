@@ -101,6 +101,13 @@
             content: ""; position: absolute; left: 0; right: 0; bottom: -2px;
             height: 2px; background: var(--accent);
         }
+        .nav-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            background: var(--accent); color: #fff;
+            font-size: 10px; font-weight: 600; font-family: var(--mono);
+            min-width: 16px; height: 16px; border-radius: 8px; padding: 0 4px;
+            margin-left: 3px; vertical-align: middle; line-height: 1;
+        }
         .logout-form { display: inline; margin: 0; }
         .logout-form button {
             background: none; border: none; padding: 6px 0;
@@ -245,6 +252,9 @@
             <nav class="nav-links">
                 {% if user.is_authenticated %}
                     <a class="nav-link {% if url_name == 'unit_hub' or url_name == 'unit_detail' or url_name == 'flashcards' or url_name == 'quiz_detail' %}current{% endif %}" href="{% url 'unit_hub' %}">Library</a>
+                    <a class="nav-link {% if url_name == 'daily_review' %}current{% endif %} nav-review" href="{% url 'daily_review' %}">
+                        Review{% if due_review_count %} <span class="nav-badge">{{ due_review_count }}</span>{% endif %}
+                    </a>
                     <a class="nav-link {% if url_name == 'ranking' %}current{% endif %}" href="{% url 'ranking' %}">Leaderboard</a>
                     <button type="button" class="voice-toggle" id="voice-toggle" aria-pressed="false" title="Toggle pronunciation">
                         <span class="vt-dot" id="vt-dot" aria-hidden="true"></span>

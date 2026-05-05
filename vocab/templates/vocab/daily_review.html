@@ -1,0 +1,132 @@
+{% extends "vocab/base.html" %}
+{% block title %}Daily Review &mdash; Vocab~Master{% endblock %}
+
+{% block content %}
+<div class="back-row reveal">
+    <a href="{% url 'unit_hub' %}" class="back-link">&larr; Library</a>
+    <span class="meta-text">Spaced repetition &middot; <span class="num">{{ due_count }}</span> card{{ due_count|pluralize }} due today</span>
+</div>
+
+{% if due_count %}
+<section class="dr-page reveal d2">
+    <script id="review-data" type="application/json">{{ cards_json }}</script>
+
+    <div id="dr-stage">
+        <div id="dr-progress-bar" class="dr-bar-wrap">
+            <div id="dr-bar-fill" class="dr-bar-fill" style="width:0%"></div>
+        </div>
+
+        <div id="dr-card-mount" class="fc-mount"></div>
+
+        <div id="dr-answer-row" class="dr-answer-row hidden-section">
+            <form method="POST" id="dr-form">
+                {% csrf_token %}
+                <input type="hidden" name="review_id" id="dr-review-id">
+                <input type="hidden" name="quality" id="dr-quality">
+                <button type="button" class="bs dr-btn-hard" onclick="submitQuality(2)">
+                    Hard &mdash; again soon
+                </button>
+                <button type="button" class="bs dr-btn-ok" onclick="submitQuality(3)">
+                    OK
+                </button>
+                <button type="button" class="bs bsp dr-btn-easy" onclick="submitQuality(5)">
+                    Easy &mdash; knew it
+                </button>
+            </form>
+        </div>
+
+        <button id="dr-reveal-btn" class="btn accent large" onclick="reveal()">Reveal &darr;</button>
+    </div>
+
+    <div id="dr-done" class="empty hidden-section">
+        <h2 class="empty-h">All caught up.</h2>
+        <p class="empty-p">No more cards due today. Come back tomorrow.</p>
+        <a href="{% url 'unit_hub' %}" class="btn ghost">&larr; Back to library</a>
+    </div>
+</section>
+
+<style>
+    .dr-page { padding: 8px 0 32px; }
+    .dr-bar-wrap { height: 3px; background: var(--b-tertiary); border-radius: 2px; margin-bottom: 28px; }
+    .dr-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+    .dr-answer-row { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .dr-answer-row .bs { font-size: 13px; padding: 9px 18px; }
+    .dr-btn-hard { border-color: var(--s-danger-fg); color: var(--s-danger-fg); }
+    .dr-btn-hard:hover { background: var(--s-danger-bg); }
+    .dr-btn-ok { }
+    .dr-btn-easy { }
+    #dr-reveal-btn { margin: 0 auto; display: block; }
+</style>
+
+<script>
+    const allCards = JSON.parse(document.getElementById('review-data').textContent);
+    let idx = 0;
+    const total = allCards.length;
+
+    function updateProgress() {
+        document.getElementById('dr-bar-fill').style.width = ((idx / total) * 100) + '%';
+    }
+
+    function renderCard() {
+        if (idx >= total) {
+            document.getElementById('dr-stage').classList.add('hidden-section');
+            document.getElementById('dr-done').classList.remove('hidden-section');
+            return;
+        }
+        updateProgress();
+        const c = allCards[idx];
+        const ipaHtml = c.ipa ? `<p class="back-ipa">${c.ipa}</p>` : '';
+        const posHtml = c.pos ? `<span class="back-pos">${c.pos}</span>` : '';
+        document.getElementById('dr-card-mount').innerHTML = `
+            <div class="flip-card" id="dr-flip" onclick="reveal()">
+                <div class="face front">
+                    <p class="pos">${idx + 1} of ${total}</p>
+                    <h2 class="word">${c.word}</h2>
+                    <p class="cue">Click to reveal</p>
+                </div>
+                <div class="face back">
+                    <div class="back-header">
+                        <h2 class="word word-small">${c.word}</h2>
+                        ${ipaHtml}${posHtml}
+                    </div>
+                    <p class="definition">${c.definition}</p>
+                    ${c.example ? `<p class="back-example">"${c.example}"</p>` : ''}
+                </div>
+            </div>
+        `;
+        document.getElementById('dr-review-id').value = c.review_id;
+        document.getElementById('dr-answer-row').classList.add('hidden-section');
+        document.getElementById('dr-reveal-btn').classList.remove('hidden-section');
+        if (window.vqTts) window.vqTts.speak(c.word);
+    }
+
+    window.reveal = function() {
+        const flip = document.getElementById('dr-flip');
+        if (flip) flip.classList.add('flipped');
+        document.getElementById('dr-answer-row').classList.remove('hidden-section');
+        document.getElementById('dr-reveal-btn').classList.add('hidden-section');
+    };
+
+    window.submitQuality = function(q) {
+        document.getElementById('dr-quality').value = q;
+        document.getElementById('dr-form').submit();
+    };
+
+    renderCard();
+</script>
+
+{% else %}
+<section class="empty reveal d2">
+    <h2 class="empty-h">You're all caught up.</h2>
+    <p class="empty-p">No cards due today. Study a unit to add words to your review queue.</p>
+    <a href="{% url 'unit_hub' %}" class="btn ghost">&larr; Back to library</a>
+</section>
+
+<style>
+    .empty { text-align: center; padding: 56px 24px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .empty-h { font-family: var(--serif); font-size: 28px; font-weight: 500; margin: 0; }
+    .empty-p { color: var(--t-secondary); margin: 0 0 8px; font-size: 15px; max-width: 48ch; }
+</style>
+{% endif %}
+
+{% endblock %}

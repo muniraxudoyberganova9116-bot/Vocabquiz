@@ -2,23 +2,34 @@
 {% block title %}Vocab~Master{% endblock %}
 
 {% block content %}
-{% if user.is_authenticated %}
-<section class="hero authed reveal">
-    <span class="eyebrow"><span class="rule-tick"></span>Welcome back, {{ user.username }}</span>
+<section class="hero reveal">
+    <span class="eyebrow"><span class="rule-tick"></span>Vocabulary practice</span>
     <h1 class="display hero-title">
-        Pick up<br>
-        <em>where you left off.</em>
+        Study the words<br>
+        that <em>actually</em> show up.
     </h1>
-
-    <div class="resume-row">
-        {% if resume_unit %}
-            <a href="{% url 'unit_detail' resume_unit.slug %}" class="btn accent large">
-                Continue {{ resume_unit.title }} <span class="arrow">&rarr;</span>
-            </a>
+    <p class="hero-blurb">
+        Flashcards for daily review and a quiz that grades itself.
+        Track what you've mastered and climb the leaderboard.
+    </p>
+    <div class="hero-cta">
+        {% if user.is_authenticated %}
+            {% if resume_unit %}
+                <a href="{% url 'unit_detail' resume_unit.slug %}" class="btn accent large">Continue {{ resume_unit.title }} <span class="arrow">&rarr;</span></a>
+            {% else %}
+                <a href="{% url 'unit_hub' %}" class="btn accent large">Go to library <span class="arrow">&rarr;</span></a>
+            {% endif %}
+            <form method="POST" action="{% url 'logout' %}" style="display:inline;margin:0;">
+                {% csrf_token %}
+                <button type="submit" class="text-link hero-alt">Sign out</button>
+            </form>
+        {% else %}
+            <a href="{% url 'register' %}" class="btn accent large">Start learning &mdash; free <span class="arrow">&rarr;</span></a>
+            <a href="{% url 'login' %}" class="text-link hero-alt">Already have an account? Sign in.</a>
         {% endif %}
-        <a href="{% url 'unit_hub' %}" class="btn ghost">Browse library</a>
     </div>
 
+    {% if user.is_authenticated %}
     <div class="stats-row">
         <div class="stat tint-accent">
             <span class="stat-label">Total XP</span>
@@ -33,23 +44,7 @@
             <span class="stat-value info">{{ completed_units }}<span class="stat-frac">/{{ total_units }}</span></span>
         </div>
     </div>
-</section>
-
-{% else %}
-<section class="hero anon reveal">
-    <span class="eyebrow"><span class="rule-tick"></span>Vocabulary practice</span>
-    <h1 class="display hero-title">
-        Study the words<br>
-        that <em>actually</em> show up.
-    </h1>
-    <p class="hero-blurb">
-        Flashcards for daily review and a quiz that grades itself.
-        Track what you've mastered and climb the leaderboard.
-    </p>
-    <div class="hero-cta">
-        <a href="{% url 'register' %}" class="btn accent large">Start learning &mdash; free <span class="arrow">&rarr;</span></a>
-        <a href="{% url 'login' %}" class="text-link hero-alt">Already have an account? Sign in.</a>
-    </div>
+    {% endif %}
 </section>
 
 <section class="features-wrap">
@@ -90,7 +85,6 @@
         </article>
     </div>
 </section>
-{% endif %}
 
 <style>
     .hero { padding: 32px 0 32px; max-width: 880px; }

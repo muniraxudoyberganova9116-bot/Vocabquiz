@@ -16,6 +16,10 @@
                 <input id="id_username" type="text" name="username" required autocomplete="username" autofocus>
             </div>
             <div class="field">
+                <label for="id_email">Email <span class="field-opt">(optional)</span></label>
+                <input id="id_email" type="email" name="email" autocomplete="email">
+            </div>
+            <div class="field">
                 <label for="id_password">Password</label>
                 <input id="id_password" type="password" name="password" required autocomplete="new-password">
             </div>
@@ -49,5 +53,6 @@
         padding: 9px 12px; border-radius: var(--r-md); margin: 0;
     }
     .auth-alt { font-family: var(--sans); color: var(--t-secondary); margin: 16px 0 0; font-size: 13px; }
+    .field-opt { font-weight: 400; color: var(--t-tertiary); }
 </style>
 {% endblock %}

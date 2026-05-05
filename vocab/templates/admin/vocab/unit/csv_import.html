@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>Import Flashcards from CSV</h1>
+<p>
+    Upload a CSV with columns: <strong>unit, word, definition</strong>
+    (optional: <em>ipa, part_of_speech, example</em>).<br>
+    Existing cards (matched by unit+word) are skipped.
+</p>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p><input type="file" name="csv_file" accept=".csv" required></p>
+    <p><input type="submit" value="Import" class="button default"></p>
+</form>
+<p><a href="..">Cancel</a></p>
+{% endblock %}

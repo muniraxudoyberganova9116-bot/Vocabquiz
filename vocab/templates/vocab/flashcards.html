@@ -16,7 +16,7 @@
     <script id="cards-data" type="application/json">
         [
             {% for card in cards %}
-                {"word": "{{ card.word|escapejs }}", "definition": "{{ card.definition|escapejs }}"}{% if not forloop.last %},{% endif %}
+                {"word": "{{ card.word|escapejs }}", "definition": "{{ card.definition|escapejs }}", "ipa": "{{ card.ipa|escapejs }}", "pos": "{{ card.part_of_speech|escapejs }}", "example": "{{ card.example|escapejs }}"}{% if not forloop.last %},{% endif %}
             {% endfor %}
         ]
     </script>
@@ -84,10 +84,21 @@
         margin: 0; text-align: center;
     }
     .face .cue { font-size: 12px; color: var(--t-tertiary); margin: 0; }
-    .face.back .word-small { font-size: 28px; margin: 0 0 4px; }
+    .face.back .word-small { font-size: 28px; margin: 0; }
     .face.back .definition {
         font-family: var(--sans); font-size: 15px; color: var(--t-secondary);
         text-align: center; line-height: 1.6; max-width: 420px; margin: 0;
+    }
+    .back-header { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .back-ipa { font-family: var(--mono); font-size: 13px; color: var(--t-tertiary); margin: 0; }
+    .back-pos {
+        font-family: var(--sans); font-size: 11px; font-style: italic;
+        color: var(--accent); font-weight: 500;
+    }
+    .back-example {
+        font-family: var(--sans); font-size: 13px; font-style: italic;
+        color: var(--t-tertiary); text-align: center; max-width: 380px; margin: 0;
+        line-height: 1.5;
     }
 
     .fc-controls { display: flex; align-items: center; gap: 16px; }
@@ -129,16 +140,24 @@
             currentCounter.innerText = currentIndex + 1;
             totalCounter.innerText = cardDeck.length;
             const cardData = cardDeck[currentIndex];
+            const ipaHtml = cardData.ipa ? `<p class="back-ipa">${cardData.ipa}</p>` : '';
+            const exHtml = cardData.example ? `<p class="back-example">"${cardData.example}"</p>` : '';
+            const posHtml = cardData.pos ? `<span class="back-pos">${cardData.pos}</span>` : '';
             container.innerHTML = `
                 <div class="flip-card" onclick="this.classList.toggle('flipped')">
                     <div class="face front">
                         <p class="pos">word ${currentIndex + 1} of ${cardDeck.length}</p>
                         <h2 class="word">${cardData.word}</h2>
-                        <p class="cue">Click card to reveal definition</p>
+                        <p class="cue">Click to reveal</p>
                     </div>
                     <div class="face back">
-                        <h2 class="word word-small">${cardData.word}</h2>
+                        <div class="back-header">
+                            <h2 class="word word-small">${cardData.word}</h2>
+                            ${ipaHtml}
+                            ${posHtml}
+                        </div>
                         <p class="definition">${cardData.definition}</p>
+                        ${exHtml}
                     </div>
                 </div>
             `;
@@ -151,7 +170,20 @@
             if (window.vqTts) window.vqTts.speak(cardData.word);
         }
         window.markKnow = function() { currentIndex++; renderCard(); };
-        window.markDontKnow = function() { cardDeck.push(cardDeck[currentIndex]); currentIndex++; renderCard(); };
+        window.markDontKnow = function() {
+            const card = container.querySelector('.flip-card');
+            if (card && !card.classList.contains('flipped')) {
+                // Reveal first — user clicks Don't know again to move on
+                card.classList.add('flipped');
+                // Swap button to "Got it, move on"
+                const btn = document.querySelector('button[onclick="markDontKnow()"]');
+                if (btn) { btn.innerHTML = '<span class="icn">&#x21BB;</span> Move on'; btn.onclick = () => { cardDeck.push(cardDeck[currentIndex]); currentIndex++; renderCard(); }; }
+            } else {
+                cardDeck.push(cardDeck[currentIndex]);
+                currentIndex++;
+                renderCard();
+            }
+        };
         renderCard();
     });
 </script>

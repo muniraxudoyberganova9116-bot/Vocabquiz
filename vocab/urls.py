@@ -11,4 +11,5 @@ urlpatterns = [
     path('learn/<slug:unit_slug>/flashcards/', views.flashcards_view, name='flashcards'),
     path('learn/<slug:unit_slug>/quiz/', views.quiz_detail, name='quiz_detail'),
     path('ranking/', views.ranking_view, name='ranking'),
+    path('review/', views.daily_review, name='daily_review'),
 ]

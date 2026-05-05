@@ -1,30 +1,78 @@
 import json
+import time
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.db import IntegrityError
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render, get_object_or_404, redirect
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .models import Flashcard, Unit, Profile, UnitProgress
+from .models import Flashcard, FlashcardReview, Unit, Profile, UnitProgress
 
+# ─── constants ────────────────────────────────────────────────────────────────
+XP_PER_UNIT = 30
+MASTERY_THRESHOLD = 80.0
+QUIZ_COOLDOWN_SECONDS = 20
+LEADERBOARD_PAGE_SIZE = 20
+
+
+# ─── helpers ──────────────────────────────────────────────────────────────────
 
 def _get_or_create_profile(user):
     profile, _ = Profile.objects.get_or_create(user=user)
     return profile
 
 
+def grade_quiz(cards, payload):
+    """
+    Grade a quiz submission and return (accuracy, mc_correct, mc_total,
+    match_correct, match_total).  Pure function — no DB writes.
+    """
+    valid_ids = {c.id for c in cards}
+
+    mc_answers = payload.get('mc', []) if isinstance(payload, dict) else []
+    match_attempts = payload.get('matches', []) if isinstance(payload, dict) else []
+
+    mc_total = len(mc_answers)
+    mc_correct = 0
+    for ans in mc_answers:
+        q_id = ans.get('question_id')
+        s_id = ans.get('selected_id')
+        if q_id in valid_ids and s_id in valid_ids and q_id == s_id:
+            mc_correct += 1
+
+    match_total = len(match_attempts)
+    match_correct = 0
+    for m in match_attempts:
+        w_id = m.get('word_id')
+        d_id = m.get('def_id')
+        if w_id in valid_ids and d_id in valid_ids and w_id == d_id:
+            match_correct += 1
+
+    total = mc_total + match_total
+    if total == 0:
+        return None, mc_correct, mc_total, match_correct, match_total
+
+    accuracy = round(((mc_correct + match_correct) / total) * 100, 2)
+    return accuracy, mc_correct, mc_total, match_correct, match_total
+
+
+# ─── auth ─────────────────────────────────────────────────────────────────────
+
 def register(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip()
         password = request.POST.get('password', '')
         if not username or not password:
             return render(request, 'vocab/register.html',
                           {'error': 'Username and password are required.'})
         try:
-            user = User.objects.create_user(username=username, password=password)
+            user = User.objects.create_user(username=username, email=email, password=password)
         except IntegrityError:
             return render(request, 'vocab/register.html',
                           {'error': 'That username is already taken.'})
@@ -42,7 +90,7 @@ def login_user(request):
         if user:
             login(request, user)
             return redirect('unit_hub')
-        return render(request, 'vocab/login.html', {'error': 'Invalid credentials'})
+        return render(request, 'vocab/login.html', {'error': 'Invalid credentials.'})
     return render(request, 'vocab/login.html')
 
 
@@ -51,6 +99,8 @@ def logout_user(request):
     logout(request)
     return redirect('home')
 
+
+# ─── pages ────────────────────────────────────────────────────────────────────
 
 def home(request):
     context = {}
@@ -103,7 +153,7 @@ def unit_hub(request):
             best_accuracy = p.accuracy
         flashcards = list(u.flashcards.all())
         accuracy = (p.accuracy if p else 0.0) or 0.0
-        xp_earned = int(round(30 * (accuracy / 100)))
+        xp_earned = int(round(XP_PER_UNIT * (accuracy / 100)))
         units_with_progress.append({
             'unit': u,
             'progress': p,
@@ -150,47 +200,32 @@ def quiz_detail(request, unit_slug):
         if len(cards) < 3:
             return HttpResponseBadRequest("Not enough cards for a quiz.")
 
+        # Rate-limit: one submission per QUIZ_COOLDOWN_SECONDS per unit
+        cooldown_key = f'quiz_last_{unit.id}'
+        last_ts = request.session.get(cooldown_key, 0)
+        now_ts = time.time()
+        if now_ts - last_ts < QUIZ_COOLDOWN_SECONDS:
+            return HttpResponseBadRequest("Please wait before resubmitting.")
+        request.session[cooldown_key] = now_ts
+
         try:
             payload = json.loads(request.POST.get('answers') or '')
         except json.JSONDecodeError:
             return HttpResponseBadRequest("Malformed quiz submission.")
 
-        mc_answers = payload.get('mc', []) if isinstance(payload, dict) else []
-        match_attempts = payload.get('matches', []) if isinstance(payload, dict) else []
-
-        valid_ids = {c.id for c in cards}
-
-        mc_total = len(mc_answers)
-        mc_correct = 0
-        for ans in mc_answers:
-            q_id = ans.get('question_id')
-            s_id = ans.get('selected_id')
-            if q_id in valid_ids and s_id in valid_ids and q_id == s_id:
-                mc_correct += 1
-
-        match_total = len(match_attempts)
-        match_correct = 0
-        for m in match_attempts:
-            w_id = m.get('word_id')
-            d_id = m.get('def_id')
-            if w_id in valid_ids and d_id in valid_ids and w_id == d_id:
-                match_correct += 1
-
-        total_questions = mc_total + match_total
-        if total_questions == 0:
+        accuracy, mc_correct, mc_total, match_correct, match_total = grade_quiz(cards, payload)
+        if accuracy is None:
             return HttpResponseBadRequest("Empty quiz submission.")
 
-        accuracy = round(((mc_correct + match_correct) / total_questions) * 100, 2)
-        is_completed_now = accuracy >= 80.0
+        is_completed_now = accuracy >= MASTERY_THRESHOLD
 
         progress, _ = UnitProgress.objects.get_or_create(user=request.user, unit=unit)
         previous_best = progress.accuracy or 0.0
         was_completed = progress.is_completed
 
-        # Award XP only on improvement, scaled to the delta. Prevents replay farming.
         earned_xp = 0
         if accuracy > previous_best:
-            earned_xp = int(round(30 * ((accuracy - previous_best) / 100)))
+            earned_xp = int(round(XP_PER_UNIT * ((accuracy - previous_best) / 100)))
             progress.accuracy = accuracy
 
         if is_completed_now and not was_completed:
@@ -205,6 +240,25 @@ def quiz_detail(request, unit_slug):
             profile.words_mastered += len(cards)
         profile.save()
 
+        # Update SR state: correct cards get quality=4, incorrect get quality=1
+        mc_correct_ids = {
+            ans['question_id'] for ans in (payload.get('mc') or [])
+            if ans.get('question_id') in {c.id for c in cards}
+            and ans.get('question_id') == ans.get('selected_id')
+        }
+        match_correct_ids = {
+            m['word_id'] for m in (payload.get('matches') or [])
+            if m.get('word_id') in {c.id for c in cards}
+            and m.get('word_id') == m.get('def_id')
+        }
+        correct_ids = mc_correct_ids | match_correct_ids
+        for card in cards:
+            review, _ = FlashcardReview.objects.get_or_create(
+                user=request.user, flashcard=card,
+                defaults={'next_review': timezone.now().date()},
+            )
+            review.record(4 if card.id in correct_ids else 1)
+
         return render(request, 'vocab/quiz_result.html', {
             'unit': unit,
             'accuracy': accuracy,
@@ -218,12 +272,55 @@ def quiz_detail(request, unit_slug):
 
 
 @login_required(login_url='login')
+def daily_review(request):
+    """Show cards due today for spaced-repetition review."""
+    today = timezone.now().date()
+    due_reviews = (
+        FlashcardReview.objects
+        .filter(user=request.user, next_review__lte=today)
+        .select_related('flashcard', 'flashcard__unit')
+        .order_by('next_review', 'id')
+    )
+
+    if request.method == 'POST':
+        review_id = request.POST.get('review_id')
+        quality = request.POST.get('quality')
+        try:
+            review = FlashcardReview.objects.get(id=review_id, user=request.user)
+            review.record(int(quality))
+        except (FlashcardReview.DoesNotExist, ValueError, TypeError):
+            pass
+        return redirect('daily_review')
+
+    cards_data = [
+        {
+            'id': r.flashcard.id,
+            'review_id': r.id,
+            'word': r.flashcard.word,
+            'ipa': r.flashcard.ipa,
+            'pos': r.flashcard.part_of_speech,
+            'definition': r.flashcard.definition,
+            'example': r.flashcard.example,
+        }
+        for r in due_reviews
+    ]
+    return render(request, 'vocab/daily_review.html', {
+        'cards_json': json.dumps(cards_data),
+        'due_count': len(cards_data),
+    })
+
+
+@login_required(login_url='login')
 def ranking_view(request):
-    profiles = list(Profile.objects.order_by('-total_score')[:10])
+    all_profiles = Profile.objects.order_by('-total_score').select_related('user')
+    paginator = Paginator(all_profiles, LEADERBOARD_PAGE_SIZE)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
 
     points_to_top_3 = None
-    if len(profiles) >= 3:
-        top_3_score = profiles[2].total_score
+    top_profiles = list(all_profiles[:3])
+    if len(top_profiles) >= 3:
+        top_3_score = top_profiles[2].total_score
         try:
             user_profile = Profile.objects.get(user=request.user)
             if user_profile.total_score < top_3_score:
@@ -232,6 +329,7 @@ def ranking_view(request):
             pass
 
     return render(request, 'vocab/ranking.html', {
-        'profiles': profiles,
+        'page_obj': page_obj,
+        'profiles': page_obj.object_list,
         'points_to_top_3': points_to_top_3,
     })
