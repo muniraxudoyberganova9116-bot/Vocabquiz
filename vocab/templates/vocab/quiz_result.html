@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VocabMaster | Quiz Result</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bg-bone { background-color: #F0EFE7; }
+        .text-navy { color: #003153; }
+    </style>
+</head>
+<body class="bg-bone text-navy font-sans py-12 px-6 flex items-center justify-center min-h-screen">
+    <div class="max-w-2xl w-full text-center">
+        <div class="bg-white p-12 rounded-[32px] shadow-2xl border-b-[8px] {% if is_completed %}border-green-500{% else %}border-red-500{% endif %} hover:translate-y-[-4px] transition-transform">
+            
+            {% if is_completed %}
+                <div class="text-7xl mb-6">🎉</div>
+                <h1 class="text-5xl font-black mb-4 text-green-600">Unit Mastered!</h1>
+                <p class="text-xl font-bold mb-6">You scored {{ accuracy }}%</p>
+                <div class="inline-block bg-yellow-100 text-yellow-600 px-6 py-3 rounded-full font-black text-2xl mb-8">
+                    +{{ xp_gained }} XP Earned!
+                </div>
+            {% else %}
+                <div class="text-7xl mb-6">💪</div>
+                <h1 class="text-5xl font-black mb-4">Keep Trying!</h1>
+                <p class="text-xl font-bold mb-6">You scored {{ accuracy }}% (80% needed to pass)</p>
+                <div class="inline-block bg-gray-100 text-gray-500 px-6 py-3 rounded-full font-black text-lg mb-8">
+                    0 XP. The unit is marked incomplete.
+                </div>
+            {% endif %}
+
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="{% url 'unit_detail' unit.slug %}" class="bg-gray-100 p-4 rounded-xl font-bold hover:bg-gray-200 transition-colors">
+                    Back to {{ unit.title }}
+                </a>
+                <a href="{% url 'ranking' %}" class="bg-navy text-white p-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all">
+                    🏆 View Your Ranking
+                </a>
+            </div>
+            
+            <div class="mt-8">
+                <a href="{% url 'unit_hub' %}" class="text-sm font-black underline hover:text-blue-600">← Back to Learn Hub</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

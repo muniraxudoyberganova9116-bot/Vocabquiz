@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VocabMaster | Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); }
+        .bg-bone { background-color: #F0EFE7; }
+        .text-navy { color: #003153; }
+        .bg-navy { background-color: #003153; }
+    </style>
+</head>
+<body class="bg-bone text-navy font-sans selection:bg-yellow-200">
+
+    <nav class="flex justify-between items-center px-8 py-6 max-w-7xl mx-auto">
+        <div class="text-2xl font-black tracking-tighter">VOCAB<span class="text-yellow-500">MASTER</span></div>
+        <div class="hidden md:flex gap-8 font-bold text-sm uppercase tracking-widest">
+            <!-- Navigation links removed. Everything is accessible via Start Learning. -->
+        </div>
+        <div>
+            {% if user.is_authenticated %}
+                <a href="{% url 'unit_hub' %}" class="bg-navy text-white px-6 py-2 rounded-full font-bold hover:scale-105 transition-transform shadow-lg mr-4">
+                    Start Learning
+                </a>
+                <a href="{% url 'logout' %}" class="text-navy font-bold hover:text-red-500 transition">Logout</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="bg-navy text-white px-6 py-2 rounded-full font-bold hover:scale-105 transition-transform shadow-lg">
+                    Start Learning / Login
+                </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <section class="max-w-7xl mx-auto px-8 py-16 grid md:grid-cols-2 gap-12 items-center">
+        <div class="animate__animated animate__fadeInLeft">
+            <h1 class="text-6xl md:text-7xl font-black leading-tight mb-6">
+                Master Words. <br> <span class="text-yellow-500">Own the Lead.</span>
+            </h1>
+            <p class="text-lg opacity-80 mb-8 max-w-md">
+                The ultimate gamified flashcard system. Study smarter, compete in groups, and watch your daily progress soar.
+            </p>
+            <div class="flex gap-4">
+                <a href="{% url 'unit_hub' %}" class="bg-yellow-400 text-navy px-8 py-4 rounded-2xl font-black shadow-[0_6px_0_rgb(161,98,7)] active:shadow-none active:translate-y-1 transition-all">
+                    Get Started — It's Free
+                </a>
+            </div>
+        </div>
+
+        <div class="animate__animated animate__fadeInRight bg-white p-8 rounded-[40px] shadow-2xl border-b-8 border-gray-200 relative overflow-hidden">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="font-bold">Daily Activity</h3>
+                <span class="text-xs font-bold bg-green-100 text-green-700 px-3 py-1 rounded-full">80% Mastery</span>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-bold"><span>Unit 1: Basics</span><span>100%</span></div>
+                    <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden"><div class="bg-green-400 h-full w-full"></div></div>
+                </div>
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs font-bold"><span>Unit 2: Advanced Verbs</span><span>45%</span></div>
+                    <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden"><div class="bg-yellow-400 h-full w-[45%]"></div></div>
+                </div>
+                <div class="space-y-1 opacity-40">
+                    <div class="flex justify-between text-xs font-bold"><span>Unit 3: Science Terms</span><span>Locked 🔒</span></div>
+                    <div class="w-full bg-gray-100 h-3 rounded-full"></div>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-8 border-t border-gray-100 flex items-center gap-4">
+                <div class="w-12 h-12 bg-navy rounded-full flex items-center justify-center text-white font-bold text-xl">1</div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase">Current Ranking</p>
+                    <p class="font-black text-lg">Alex Rodriguez <span class="text-yellow-500">🏆</span></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="max-w-7xl mx-auto px-8 py-24">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-black mb-4">Everything you need to learn.</h2>
+            <div class="h-1 w-20 bg-yellow-500 mx-auto"></div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="p-10 bg-white rounded-3xl hover:-translate-y-2 transition shadow-xl group">
+                <div class="text-4xl mb-4 group-hover:animate-bounce">⭐</div>
+                <h3 class="text-xl font-black mb-2">Smart Flashcards</h3>
+                <p class="opacity-70 text-sm">Our "Review Later" system ensures you never forget a word. Tag difficult words and they'll reappear until you master them.</p>
+            </div>
+            <div class="p-10 bg-white rounded-3xl hover:-translate-y-2 transition shadow-xl group">
+                <div class="text-4xl mb-4 group-hover:animate-bounce">📝</div>
+                <h3 class="text-xl font-black mb-2">Instant Quizzes</h3>
+                <p class="opacity-70 text-sm">Automatically generate quizzes from your card decks. Earn points for speed and accuracy.</p>
+            </div>
+            <div class="p-10 bg-white rounded-3xl hover:-translate-y-2 transition shadow-xl group">
+                <div class="text-4xl mb-4 group-hover:animate-bounce">🏆</div>
+                <h3 class="text-xl font-black mb-2">Group Ranking</h3>
+                <p class="opacity-70 text-sm">Join study groups with your classmates and fight for the top spot on the weekly dashboard.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-12 border-t border-gray-200 text-center opacity-50 text-xs font-bold">
+        &copy; 2026 VOCABMASTER AI. ALL RIGHTS RESERVED.
+    </footer>
+
+    <style>
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            display: inline-block;
+            animation: marquee 20s linear infinite;
+        }
+    </style>
+</body>
+</html>

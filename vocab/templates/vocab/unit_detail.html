@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VocabMaster | {{ unit.title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bg-bone { background-color: #F0EFE7; }
+        .text-navy { color: #003153; }
+    </style>
+</head>
+<body class="bg-bone text-navy font-sans py-12 px-6">
+    <div class="max-w-3xl mx-auto">
+        <div class="mb-10 text-center">
+            <h1 class="text-5xl font-black mb-2">{{ unit.title }}</h1>
+            
+            {% if request.user.is_authenticated and progress %}
+                {% if progress.is_completed %}
+                    <span class="inline-block mt-2 bg-green-500 text-white font-bold px-4 py-1 rounded-full text-sm shadow">
+                        ✅ Completed 
+                    </span>
+                {% else %}
+                    <span class="inline-block mt-2 bg-yellow-400 text-navy font-bold px-4 py-1 rounded-full text-sm shadow">
+                        ⏳ Incomplete (Best: {{ progress.accuracy|default:"0.0" }}%)
+                    </span>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <!-- Flashcards Option -->
+            <a href="{% url 'flashcards' unit.slug %}" class="bg-white p-8 rounded-[32px] shadow-xl hover:-translate-y-2 transition-transform text-center flex flex-col items-center justify-center min-h-[250px] border-b-4 border-blue-500">
+                <div class="text-6xl mb-4">🗂️</div>
+                <h3 class="font-black text-2xl">Flashcards</h3>
+                <p class="text-sm opacity-70 mt-2">Review words and their definitions</p>
+            </a>
+            
+            <!-- Quiz Option -->
+            <a href="{% url 'quiz_detail' unit.slug %}" class="bg-white p-8 rounded-[32px] shadow-xl hover:-translate-y-2 transition-transform text-center flex flex-col items-center justify-center min-h-[250px] border-b-4 border-yellow-400">
+                <div class="text-6xl mb-4">🎯</div>
+                <h3 class="font-black text-2xl">Quiz Mode</h3>
+                <p class="text-sm opacity-70 mt-2">Test your knowledge to earn XP</p>
+            </a>
+        </div>
+
+        <div class="mt-12 flex justify-center space-x-4">
+            <a href="{% url 'unit_hub' %}" class="text-sm font-black underline hover:text-blue-600">← Back to All Units</a>
+            <a href="{% url 'ranking' %}" class="text-sm font-black underline hover:text-blue-600 ml-4">🏆 Your Ranking</a>
+        </div>
+    </div>
+</body>
+</html>

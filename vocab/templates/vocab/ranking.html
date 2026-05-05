@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VocabMaster | Leaderboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bg-bone { background-color: #F0EFE7; }
+        .text-navy { color: #003153; }
+    </style>
+</head>
+<body class="bg-bone text-navy font-sans py-12 px-6">
+    <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-10">
+            <h1 class="text-5xl font-black mb-2">🏆 Leaderboard</h1>
+            <p class="opacity-60 font-bold uppercase tracking-widest text-sm">Top learners in VocabMaster</p>
+            {% if points_to_top_3 %}
+                <p class="mt-4 inline-block bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full font-bold text-sm">
+                    You need {{ points_to_top_3 }} more XP to break into the Top 3! Keep learning!
+                </p>
+            {% endif %}
+        </div>
+
+        <div class="bg-white rounded-[32px] overflow-hidden shadow-xl border-b-4 border-gray-200">
+            <ul class="divide-y divide-gray-100">
+                {% for profile in profiles %}
+                <li class="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <span class="text-2xl font-black {% if forloop.counter == 1 %}text-yellow-400{% elif forloop.counter == 2 %}text-gray-400{% elif forloop.counter == 3 %}text-yellow-600{% endif %}">
+                            #{{ forloop.counter }}
+                        </span>
+                        <h3 class="font-bold text-xl">
+                            {{ profile.user.username }}
+                            {% if forloop.counter == 1 %} 🥇 {% endif %}
+                            {% if forloop.counter == 2 %} 🥈 {% endif %}
+                            {% if forloop.counter == 3 %} 🥉 {% endif %}
+                        </h3>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-2xl font-black text-blue-600">{{ profile.total_score }} XP</p>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="p-8 text-center text-gray-500 font-bold">No users ranked yet!</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="mt-12 text-center">
+            <a href="{% url 'unit_hub' %}" class="inline-block bg-navy text-white px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all">
+                Continue Learning
+            </a>
+        </div>
+    </div>
+</body>
+</html>
