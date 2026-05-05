@@ -84,7 +84,7 @@
             <div class="text-center mt-12 hidden-section" id="submit-section">
                 <form method="POST" action="{% url 'quiz_detail' unit.slug %}">
                     {% csrf_token %}
-                    <input type="hidden" name="accuracy" id="form-accuracy" value="0">
+                    <input type="hidden" name="answers" id="form-answers" value="">
                     <button type="submit" class="bg-yellow-400 text-navy px-8 py-4 rounded-2xl font-black shadow-[0_6px_0_rgb(161,98,7)] hover:-translate-y-1 active:translate-y-1 active:shadow-none transition-all text-xl mx-auto block">
                         Submit Results
                     </button>
@@ -109,22 +109,29 @@
             }
 
             function shuffle(array) {
-                return array.sort(() => Math.random() - 0.5);
+                const a = array.slice();
+                for (let i = a.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [a[i], a[j]] = [a[j], a[i]];
+                }
+                return a;
             }
 
             // Shuffle original cards for the MCQ order
-            const mcCards = shuffle([...cards]);
+            const mcCards = shuffle(cards);
 
             // State
-            let totalCorrect = 0;
             let matchCount = Math.min(5, cards.length);
-            let totalQuestions = mcCards.length + matchCount; 
-            
+
             let currentMCIndex = 0;
             let selectedMCOption = null;
             let isMCOptionChecked = false;
 
             let answeredMatch = 0;
+
+            // Server-side scoring: collect actual answers and post them.
+            const mcAnswers = [];          // [{question_id, selected_id}]
+            const matchFirstAttempts = {}; // { word_id: def_id }  (only first try kept)
 
             // DOM Elements
             const mcSection = document.getElementById('mc-section');
@@ -154,8 +161,8 @@
                 
                 options.forEach((opt, index) => {
                     const isCorrect = opt.id === card.id;
-                    html += `<button class="mc-btn block w-full text-left p-6 rounded-2xl border-2 border-gray-200 bg-white font-bold hover:bg-gray-50 transition-colors text-lg" 
-                             data-correct="${isCorrect}" onclick="selectMCOption(this)">${opt.definition}</button>`;
+                    html += `<button class="mc-btn block w-full text-left p-6 rounded-2xl border-2 border-gray-200 bg-white font-bold hover:bg-gray-50 transition-colors text-lg"
+                             data-correct="${isCorrect}" data-option-id="${opt.id}" onclick="selectMCOption(this)">${opt.definition}</button>`;
                 });
                 html += `</div>`;
                 qContainer.innerHTML = html;
@@ -181,11 +188,13 @@
 
                 isMCOptionChecked = true;
                 const isCorrect = selectedMCOption.dataset.correct === "true";
-                
+                const questionId = mcCards[currentMCIndex].id;
+                const selectedId = parseInt(selectedMCOption.dataset.optionId, 10);
+                mcAnswers.push({ question_id: questionId, selected_id: selectedId });
+
                 if (isCorrect) {
                     selectedMCOption.classList.remove('selected');
                     selectedMCOption.classList.add('correct');
-                    totalCorrect++;
                 } else {
                     selectedMCOption.classList.remove('selected');
                     selectedMCOption.classList.add('wrong');
@@ -267,28 +276,28 @@
                 if (selectedWord && selectedDef) {
                     const wBtn = selectedWord;
                     const dBtn = selectedDef;
-                    const wId = wBtn.dataset.id;
-                    const dId = dBtn.dataset.id;
+                    const wId = parseInt(wBtn.dataset.id, 10);
+                    const dId = parseInt(dBtn.dataset.id, 10);
 
                     selectedWord.classList.remove('selected');
                     selectedDef.classList.remove('selected');
                     selectedWord = null;
                     selectedDef = null;
 
+                    // Record only the FIRST def_id attempted for each word — this is what
+                    // the server grades against. Retries don't overwrite it.
+                    if (!(wId in matchFirstAttempts)) {
+                        matchFirstAttempts[wId] = dId;
+                    }
+
                     if (wId === dId) {
                         wBtn.classList.add('correct');
                         dBtn.classList.add('correct');
-                        if(!wBtn.dataset.wrongBefore) {
-                            totalCorrect++;
-                        } else {
-                            totalCorrect += 0.5; // partial points
-                        }
                         answeredMatch++;
                         if (answeredMatch === matchCount) {
                             finishQuiz();
                         }
                     } else {
-                        wBtn.dataset.wrongBefore = "true";
                         wBtn.classList.add('wrong');
                         dBtn.classList.add('wrong');
                         setTimeout(() => {
@@ -300,8 +309,12 @@
             };
 
             function finishQuiz() {
-                const accuracy = ((totalCorrect / totalQuestions) * 100).toFixed(2);
-                document.getElementById('form-accuracy').value = accuracy;
+                const matches = Object.entries(matchFirstAttempts).map(([w, d]) => ({
+                    word_id: parseInt(w, 10),
+                    def_id: d,
+                }));
+                const payload = { mc: mcAnswers, matches: matches };
+                document.getElementById('form-answers').value = JSON.stringify(payload);
                 document.getElementById('submit-section').classList.remove('hidden-section');
                 window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
             }

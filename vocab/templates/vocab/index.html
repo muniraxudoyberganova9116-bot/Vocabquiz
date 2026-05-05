@@ -25,7 +25,10 @@
                 <a href="{% url 'unit_hub' %}" class="bg-navy text-white px-6 py-2 rounded-full font-bold hover:scale-105 transition-transform shadow-lg mr-4">
                     Start Learning
                 </a>
-                <a href="{% url 'logout' %}" class="text-navy font-bold hover:text-red-500 transition">Logout</a>
+                <form method="POST" action="{% url 'logout' %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="text-navy font-bold hover:text-red-500 transition">Logout</button>
+                </form>
             {% else %}
                 <a href="{% url 'login' %}" class="bg-navy text-white px-6 py-2 rounded-full font-bold hover:scale-105 transition-transform shadow-lg">
                     Start Learning / Login

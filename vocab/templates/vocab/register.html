@@ -13,6 +13,9 @@
 <body class="bg-bone text-navy font-sans min-h-screen flex items-center justify-center">
     <div class="bg-white p-10 rounded-3xl shadow-xl w-full max-w-md">
         <h2 class="text-3xl font-black mb-6 text-center">Create Account</h2>
+        {% if error %}
+        <p class="text-red-500 font-bold mb-4 text-center">{{ error }}</p>
+        {% endif %}
         <form method="POST" class="space-y-4">
             {% csrf_token %}
             <div>

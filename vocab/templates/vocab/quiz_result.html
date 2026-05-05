@@ -16,18 +16,34 @@
             
             {% if is_completed %}
                 <div class="text-7xl mb-6">🎉</div>
-                <h1 class="text-5xl font-black mb-4 text-green-600">Unit Mastered!</h1>
-                <p class="text-xl font-bold mb-6">You scored {{ accuracy }}%</p>
+                <h1 class="text-5xl font-black mb-4 text-green-600">
+                    {% if just_completed %}Unit Mastered!{% else %}Unit Already Mastered{% endif %}
+                </h1>
+                <p class="text-xl font-bold mb-2">You scored {{ accuracy }}% on this attempt</p>
+                <p class="text-sm opacity-60 mb-6">Best: {{ best_accuracy }}%</p>
+                {% if xp_gained %}
                 <div class="inline-block bg-yellow-100 text-yellow-600 px-6 py-3 rounded-full font-black text-2xl mb-8">
                     +{{ xp_gained }} XP Earned!
                 </div>
+                {% else %}
+                <div class="inline-block bg-gray-100 text-gray-500 px-6 py-3 rounded-full font-black text-lg mb-8">
+                    No new XP — beat your best to earn more.
+                </div>
+                {% endif %}
             {% else %}
                 <div class="text-7xl mb-6">💪</div>
                 <h1 class="text-5xl font-black mb-4">Keep Trying!</h1>
-                <p class="text-xl font-bold mb-6">You scored {{ accuracy }}% (80% needed to pass)</p>
-                <div class="inline-block bg-gray-100 text-gray-500 px-6 py-3 rounded-full font-black text-lg mb-8">
-                    0 XP. The unit is marked incomplete.
+                <p class="text-xl font-bold mb-2">You scored {{ accuracy }}% (80% needed to pass)</p>
+                <p class="text-sm opacity-60 mb-6">Best: {{ best_accuracy }}%</p>
+                {% if xp_gained %}
+                <div class="inline-block bg-yellow-100 text-yellow-600 px-6 py-3 rounded-full font-black text-lg mb-8">
+                    +{{ xp_gained }} XP for the improvement!
                 </div>
+                {% else %}
+                <div class="inline-block bg-gray-100 text-gray-500 px-6 py-3 rounded-full font-black text-lg mb-8">
+                    No new XP — beat your best to earn more.
+                </div>
+                {% endif %}
             {% endif %}
 
             <div class="flex flex-col sm:flex-row justify-center gap-4">
