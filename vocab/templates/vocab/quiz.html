@@ -1,28 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VocabMaster | {{ unit.title }} Quiz</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .bg-bone { background-color: #F0EFE7; }
-        .text-navy { color: #003153; }
-        .bg-navy { background-color: #003153; }
+{% extends "vocab/base.html" %}
+{% block title %}{{ unit.title }} &mdash; Quiz{% endblock %}
 
-        .mc-btn.selected { border-color: #3b82f6 !important; background-color: #eff6ff !important; }
-        .mc-btn.correct { background-color: #22c55e !important; color: white !important; border-color: #16a34a !important; }
-        .mc-btn.wrong { background-color: #ef4444 !important; color: white !important; border-color: #dc2626 !important; }
-        
-        .match-btn.selected { background-color: #3b82f6 !important; color: white !important; border-color: #2563eb !important; }
-        .match-btn.correct { background-color: #22c55e !important; color: white !important; border-color: #16a34a !important; pointer-events: none; opacity: 0.8; }
-        .match-btn.wrong { background-color: #ef4444 !important; color: white !important; border-color: #dc2626 !important; }
-        
-        .hidden-section { display: none !important; }
-    </style>
-</head>
-<body class="bg-bone text-navy font-sans py-12 px-6 flex flex-col min-h-screen">
-    
+{% block content %}
+<div class="back-row reveal">
+    <a href="{% url 'unit_detail' unit.slug %}" class="back-link">&larr; {{ unit.title }}</a>
+    <div class="back-meta">
+        <span class="meta-text" id="qctr">Question 1 of 1</span>
+        <span class="meta-text score-chip" id="qsc">Score 0</span>
+    </div>
+</div>
+
+<section class="qz reveal d2">
+    <div class="qz-head">
+        <h1 class="qz-h">{{ unit.title }} &mdash; Quiz</h1>
+        <p class="meta-text">Multiple choice followed by matching &middot; 80% to master</p>
+    </div>
+
+    <div class="ptrack qz-progress">
+        <div class="pfill pfill-accent" id="qpb" style="width: 0%;"></div>
+    </div>
+
     <script id="cards-data" type="application/json">
         [
             {% for card in cards %}
@@ -31,294 +28,310 @@
         ]
     </script>
 
-    <div class="max-w-4xl mx-auto w-full flex-grow">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-8">
-            <a href="{% url 'unit_detail' unit.slug %}" class="bg-white px-4 py-2 rounded-full font-bold shadow hover:-translate-y-1 transition-transform">
-                ← Back to Menu
-            </a>
-            <div class="font-black opacity-60 uppercase tracking-widest text-sm">
-                {{ unit.title }} Quiz
+    <div id="quiz-container">
+        <div class="surface qz-card">
+            <div id="mc-section" class="section">
+                <header class="sect-head">
+                    <span class="part-label">Part 1 &middot; Multiple choice</span>
+                    <span class="meta-text" id="mc-progress">1 / 1</span>
+                </header>
+                <div id="mc-question-container" class="question"></div>
+                <footer class="sect-foot">
+                    <button id="btn-check" class="btn disabled">Check answer</button>
+                    <button id="btn-next" class="btn accent hidden-section">Next question <span class="arrow">&rarr;</span></button>
+                </footer>
             </div>
-        </div>
 
-        <div id="quiz-container">
-            <div class="bg-white p-8 rounded-[32px] shadow-xl border-b-[8px] border-gray-200 mb-8 min-h-[400px] flex flex-col">
-                
-                <!-- Section 1: Multiple Choice -->
-                <div id="mc-section" class="flex-grow flex flex-col">
-                    <div class="flex justify-between font-black opacity-50 text-sm mb-4">
-                        <span>Multiple Choice</span>
-                        <span id="mc-progress">1 / 10</span>
+            <div id="matching-section" class="section hidden-section">
+                <header class="sect-head">
+                    <span class="part-label">Part 2 &middot; Matching</span>
+                    <span class="meta-text">Pair each word with its definition</span>
+                </header>
+                <div class="matching-grid">
+                    <div class="match-side">
+                        <h3 class="match-h">Words</h3>
+                        <div id="match-words" class="match-col"></div>
                     </div>
-
-                    <div id="mc-question-container" class="flex-grow">
-                        <!-- Content injected via JS -->
-                    </div>
-
-                    <div class="mt-8 flex justify-end gap-4" id="mc-actions">
-                        <button id="btn-check" class="bg-blue-500 text-white px-8 py-3 rounded-xl font-black shadow hover:-translate-y-1 active:translate-y-1 transition-all opacity-50 cursor-not-allowed cursor-pointer">
-                            Check
-                        </button>
-                        <button id="btn-next" class="bg-navy text-white px-8 py-3 rounded-xl font-black shadow hover:-translate-y-1 active:translate-y-1 transition-all hidden-section">
-                            Next Question →
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Section 2: Matching -->
-                <div id="matching-section" class="hidden-section flex-grow flex flex-col">
-                    <div class="flex justify-between font-black opacity-50 text-sm mb-4">
-                        <span>Matching Exercise</span>
-                    </div>
-                    <p class="text-sm opacity-70 mb-6 font-bold">Select a word, then select its matching definition.</p>
-                    
-                    <div class="grid grid-cols-2 gap-8 flex-grow">
-                        <div id="match-words" class="space-y-4"></div>
-                        <div id="match-defs" class="space-y-4"></div>
+                    <div class="match-side">
+                        <h3 class="match-h">Definitions</h3>
+                        <div id="match-defs" class="match-col"></div>
                     </div>
                 </div>
             </div>
-
-            <!-- Submit form -->
-            <div class="text-center mt-12 hidden-section" id="submit-section">
-                <form method="POST" action="{% url 'quiz_detail' unit.slug %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="answers" id="form-answers" value="">
-                    <button type="submit" class="bg-yellow-400 text-navy px-8 py-4 rounded-2xl font-black shadow-[0_6px_0_rgb(161,98,7)] hover:-translate-y-1 active:translate-y-1 active:shadow-none transition-all text-xl mx-auto block">
-                        Submit Results
-                    </button>
-                </form>
-            </div>
         </div>
-        
-        <div id="empty-state" class="bg-white p-12 text-center rounded-[32px] shadow-lg hidden">
-            <p class="text-xl font-bold text-gray-500">Not enough cards to generate a quiz.</p>
+
+        <div id="submit-section" class="hidden-section submit-row">
+            <form method="POST" action="{% url 'quiz_detail' unit.slug %}">
+                {% csrf_token %}
+                <input type="hidden" name="answers" id="form-answers" value="">
+                <button type="submit" class="btn accent large">Submit quiz <span class="arrow">&rarr;</span></button>
+            </form>
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const rawData = document.getElementById('cards-data').textContent;
-            let cards = JSON.parse(rawData);
+    <div id="empty-state" class="empty hidden-section">
+        <h2 class="empty-h">Not enough cards for a quiz.</h2>
+        <p class="empty-p">This unit needs at least 3 cards.</p>
+    </div>
+</section>
 
-            if (cards.length < 3) {
-                document.getElementById('quiz-container').classList.add('hidden-section');
-                document.getElementById('empty-state').classList.remove('hidden-section');
-                return;
+<style>
+    .back-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 0.5px solid var(--b-tertiary); margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
+    .back-meta { display: flex; gap: 12px; align-items: center; }
+    .score-chip { background: var(--bg-2); padding: 3px 10px; border-radius: var(--r-md); color: var(--accent); font-weight: 500; }
+
+    .qz-head { margin-bottom: 16px; }
+    .qz-h { font-family: var(--serif); font-size: 24px; font-weight: 500; margin: 0 0 4px; letter-spacing: -0.015em; }
+    .qz-progress { margin-bottom: 20px; }
+
+    .qz-card { padding: 28px 30px; }
+    .section { display: flex; flex-direction: column; gap: 22px; min-height: 380px; }
+    .sect-head {
+        display: flex; justify-content: space-between; align-items: baseline;
+        padding-bottom: 14px; border-bottom: 0.5px solid var(--b-tertiary);
+        gap: 16px; flex-wrap: wrap;
+    }
+    .part-label { font-family: var(--sans); font-size: 12px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.04em; }
+
+    .question { flex: 1; }
+    .q-prompt { font-size: 13px; color: var(--t-tertiary); margin: 0 0 6px; }
+    .stem-word {
+        font-family: var(--serif); font-weight: 500;
+        font-size: 44px; line-height: 1.1; letter-spacing: -0.025em;
+        margin: 0 0 24px; text-align: center; color: var(--t-primary);
+    }
+    .stem-card { background: var(--bg-2); border-radius: var(--r-lg); padding: 28px 24px; margin-bottom: 18px; text-align: center; }
+
+    .options { display: flex; flex-direction: column; gap: 8px; }
+    .qopt {
+        text-align: left; cursor: pointer;
+        background: var(--bg); color: var(--t-primary);
+        border: 0.5px solid var(--b-tertiary); border-radius: var(--r-lg);
+        padding: 12px 16px;
+        font-family: var(--sans); font-size: 14px; line-height: 1.5;
+        transition: border-color 0.15s, background 0.15s;
+        display: flex; gap: 12px; align-items: flex-start;
+    }
+    .qopt:hover { border-color: var(--b-secondary); background: var(--bg-2); }
+    .qopt .marker {
+        font-family: var(--mono); font-size: 11px; font-weight: 500;
+        color: var(--t-tertiary); padding-top: 2px; flex-shrink: 0; min-width: 14px;
+    }
+    .qopt.selected { border-color: var(--t-primary); background: var(--bg-2); }
+    .qopt.qok { background: var(--s-success-bg); border-color: var(--s-success-bd); color: var(--s-success-fg); }
+    .qopt.qok .marker { color: var(--s-success-fg); }
+    .qopt.qwrong { background: var(--s-danger-bg); border-color: var(--s-danger-bd); color: var(--s-danger-fg); }
+    .qopt.qwrong .marker { color: var(--s-danger-fg); }
+
+    .sect-foot { display: flex; justify-content: flex-end; gap: 12px; padding-top: 14px; border-top: 0.5px solid var(--b-tertiary); }
+
+    .matching-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 20px; }
+    .match-side { display: flex; flex-direction: column; gap: 8px; }
+    .match-h { font-family: var(--sans); font-size: 11px; font-weight: 600; color: var(--t-tertiary); letter-spacing: 0.04em; text-transform: uppercase; margin: 0 0 4px; }
+    .match-col { display: flex; flex-direction: column; gap: 6px; }
+    .match-btn {
+        background: var(--bg); border: 0.5px solid var(--b-tertiary);
+        border-radius: var(--r-lg); padding: 11px 14px; cursor: pointer;
+        text-align: left; font-family: var(--sans); font-size: 13px; line-height: 1.45;
+        color: var(--t-primary); transition: all 0.15s;
+    }
+    .match-btn:hover { border-color: var(--b-secondary); background: var(--bg-2); }
+    .match-btn.selected { background: var(--t-primary); color: var(--bg); border-color: var(--t-primary); }
+    .match-btn.correct { background: var(--s-success-bg); color: var(--s-success-fg); border-color: var(--s-success-bd); pointer-events: none; }
+    .match-btn.wrong { background: var(--s-danger-bg); color: var(--s-danger-fg); border-color: var(--s-danger-bd); }
+
+    .submit-row { display: flex; justify-content: center; padding: 24px 0 0; }
+
+    .empty { text-align: center; padding: 64px 0; }
+    .empty-h { font-family: var(--serif); font-size: 26px; font-weight: 500; margin: 0 0 6px; }
+    .empty-p { color: var(--t-secondary); margin: 0; }
+
+    @media (max-width: 720px) {
+        .qz-card { padding: 22px 18px; }
+        .stem-word { font-size: 36px; }
+        .matching-grid { grid-template-columns: 1fr; }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const rawData = document.getElementById('cards-data').textContent;
+        let cards = JSON.parse(rawData);
+        if (cards.length < 3) {
+            document.getElementById('quiz-container').classList.add('hidden-section');
+            document.getElementById('empty-state').classList.remove('hidden-section');
+            return;
+        }
+        function shuffle(array) {
+            const a = array.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
             }
+            return a;
+        }
+        const mcCards = shuffle(cards);
+        const matchCount = Math.min(5, cards.length);
+        const totalSteps = mcCards.length + matchCount;
+        let currentMCIndex = 0;
+        let selectedMCOption = null;
+        let isMCOptionChecked = false;
+        let answeredMatch = 0;
+        let score = 0;
+        const mcAnswers = [];
+        const matchFirstAttempts = {};
+        const mcSection = document.getElementById('mc-section');
+        const matchSection = document.getElementById('matching-section');
+        const qContainer = document.getElementById('mc-question-container');
+        const mcProgress = document.getElementById('mc-progress');
+        const btnCheck = document.getElementById('btn-check');
+        const btnNext = document.getElementById('btn-next');
+        const qctr = document.getElementById('qctr');
+        const qsc = document.getElementById('qsc');
+        const qpb = document.getElementById('qpb');
+        const markers = ['A', 'B', 'C', 'D', 'E'];
 
-            function shuffle(array) {
-                const a = array.slice();
-                for (let i = a.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [a[i], a[j]] = [a[j], a[i]];
-                }
-                return a;
-            }
+        function setProgress(stepDone) {
+            qpb.style.width = `${(stepDone / totalSteps) * 100}%`;
+        }
+        function setScore() { qsc.innerText = `Score ${score}`; }
 
-            // Shuffle original cards for the MCQ order
-            const mcCards = shuffle(cards);
-
-            // State
-            let matchCount = Math.min(5, cards.length);
-
-            let currentMCIndex = 0;
-            let selectedMCOption = null;
-            let isMCOptionChecked = false;
-
-            let answeredMatch = 0;
-
-            // Server-side scoring: collect actual answers and post them.
-            const mcAnswers = [];          // [{question_id, selected_id}]
-            const matchFirstAttempts = {}; // { word_id: def_id }  (only first try kept)
-
-            // DOM Elements
-            const mcSection = document.getElementById('mc-section');
-            const matchSection = document.getElementById('matching-section');
-            const qContainer = document.getElementById('mc-question-container');
-            const mcProgress = document.getElementById('mc-progress');
-
-            const btnCheck = document.getElementById('btn-check');
-            const btnNext = document.getElementById('btn-next');
-
-            // --- Multiple Choice Flow ---
-            function renderMCQuestion() {
-                isMCOptionChecked = false;
-                selectedMCOption = null;
-                btnCheck.classList.remove('hidden-section');
-                btnNext.classList.add('hidden-section');
-                btnCheck.classList.add('opacity-50', 'cursor-not-allowed');
-                btnCheck.disabled = true;
-
-                const card = mcCards[currentMCIndex];
-                mcProgress.innerText = `${currentMCIndex + 1} / ${mcCards.length}`;
-                
-                const distractors = shuffle(cards.filter(c => c.id !== card.id)).slice(0, 2);
-                const options = shuffle([...distractors, card]);
-
-                let html = `<p class="text-3xl font-black mb-8 mt-4 text-center">What is the meaning of "<span class="text-blue-600">${card.word}</span>"?</p><div class="space-y-4 max-w-2xl mx-auto">`;
-                
-                options.forEach((opt, index) => {
-                    const isCorrect = opt.id === card.id;
-                    html += `<button class="mc-btn block w-full text-left p-6 rounded-2xl border-2 border-gray-200 bg-white font-bold hover:bg-gray-50 transition-colors text-lg"
-                             data-correct="${isCorrect}" data-option-id="${opt.id}" onclick="selectMCOption(this)">${opt.definition}</button>`;
-                });
-                html += `</div>`;
-                qContainer.innerHTML = html;
-            }
-
-            window.selectMCOption = function(btn) {
-                if (isMCOptionChecked) return; // Locked after checking
-
-                // Deselect previous
-                if (selectedMCOption) {
-                    selectedMCOption.classList.remove('selected');
-                }
-                selectedMCOption = btn;
-                selectedMCOption.classList.add('selected');
-
-                // Enable Check button
-                btnCheck.classList.remove('opacity-50', 'cursor-not-allowed');
-                btnCheck.disabled = false;
-            };
-
-            btnCheck.addEventListener('click', () => {
-                if (!selectedMCOption || isMCOptionChecked) return;
-
-                isMCOptionChecked = true;
-                const isCorrect = selectedMCOption.dataset.correct === "true";
-                const questionId = mcCards[currentMCIndex].id;
-                const selectedId = parseInt(selectedMCOption.dataset.optionId, 10);
-                mcAnswers.push({ question_id: questionId, selected_id: selectedId });
-
-                if (isCorrect) {
-                    selectedMCOption.classList.remove('selected');
-                    selectedMCOption.classList.add('correct');
-                } else {
-                    selectedMCOption.classList.remove('selected');
-                    selectedMCOption.classList.add('wrong');
-                    // Highlight correct answer
-                    const correctBtn = qContainer.querySelector('[data-correct="true"]');
-                    correctBtn.classList.add('correct');
-                }
-
-                // Switch buttons
-                btnCheck.classList.add('hidden-section');
-                btnNext.classList.remove('hidden-section');
+        function renderMCQuestion() {
+            isMCOptionChecked = false;
+            selectedMCOption = null;
+            btnCheck.classList.remove('hidden-section');
+            btnNext.classList.add('hidden-section');
+            btnCheck.classList.add('disabled');
+            btnCheck.disabled = true;
+            const card = mcCards[currentMCIndex];
+            mcProgress.innerText = `${currentMCIndex + 1} / ${mcCards.length}`;
+            qctr.innerText = `Question ${currentMCIndex + 1} of ${mcCards.length}`;
+            const distractors = shuffle(cards.filter(c => c.id !== card.id)).slice(0, 2);
+            const options = shuffle([...distractors, card]);
+            let html = `
+                <div class="stem-card">
+                    <p class="q-prompt">Choose the correct definition for</p>
+                    <p class="stem-word">${card.word}</p>
+                </div>
+                <div class="options">
+            `;
+            options.forEach((opt, idx) => {
+                const isCorrect = opt.id === card.id;
+                html += `<button class="qopt" data-correct="${isCorrect}" data-option-id="${opt.id}" onclick="selectMCOption(this)"><span class="marker">${markers[idx]}</span><span>${opt.definition}</span></button>`;
             });
+            html += `</div>`;
+            qContainer.innerHTML = html;
+            if (window.vqTts) window.vqTts.speak(card.word);
+        }
 
-            btnNext.addEventListener('click', () => {
-                currentMCIndex++;
-                if (currentMCIndex < mcCards.length) {
-                    renderMCQuestion();
-                } else {
-                    startMatchingSection();
-                }
-            });
+        window.selectMCOption = function(btn) {
+            if (isMCOptionChecked) return;
+            if (selectedMCOption) selectedMCOption.classList.remove('selected');
+            selectedMCOption = btn;
+            selectedMCOption.classList.add('selected');
+            btnCheck.classList.remove('disabled');
+            btnCheck.disabled = false;
+        };
 
-            // Start MCQ
-            renderMCQuestion();
-
-
-            // --- Matching Flow ---
-            function startMatchingSection() {
-                mcSection.classList.add('hidden-section');
-                matchSection.classList.remove('hidden-section');
-
-                const matchCards = shuffle([...cards]).slice(0, matchCount);
-                const matchWordsList = shuffle([...matchCards]);
-                const matchDefsList = shuffle([...matchCards]);
-
-                const wContainer = document.getElementById('match-words');
-                const dContainer = document.getElementById('match-defs');
-
-                matchWordsList.forEach(card => {
-                    const btn = document.createElement('button');
-                    btn.className = "match-btn w-full p-4 rounded-xl border-2 border-gray-200 bg-white font-bold hover:bg-gray-100 transition-colors";
-                    btn.innerText = card.word;
-                    btn.dataset.id = card.id;
-                    btn.dataset.type = 'word';
-                    btn.onclick = () => handleMatchClick(btn);
-                    wContainer.appendChild(btn);
-                });
-
-                matchDefsList.forEach(card => {
-                    const btn = document.createElement('button');
-                    btn.className = "match-btn w-full p-4 rounded-xl border-2 border-gray-200 bg-white font-bold hover:bg-gray-100 transition-colors text-sm text-left";
-                    btn.innerText = card.definition;
-                    btn.dataset.id = card.id;
-                    btn.dataset.type = 'def';
-                    btn.onclick = () => handleMatchClick(btn);
-                    dContainer.appendChild(btn);
-                });
+        btnCheck.addEventListener('click', () => {
+            if (!selectedMCOption || isMCOptionChecked) return;
+            isMCOptionChecked = true;
+            const isCorrect = selectedMCOption.dataset.correct === "true";
+            const questionId = mcCards[currentMCIndex].id;
+            const selectedId = parseInt(selectedMCOption.dataset.optionId, 10);
+            mcAnswers.push({ question_id: questionId, selected_id: selectedId });
+            if (isCorrect) {
+                selectedMCOption.classList.remove('selected');
+                selectedMCOption.classList.add('qok');
+                score++; setScore();
+            } else {
+                selectedMCOption.classList.remove('selected');
+                selectedMCOption.classList.add('qwrong');
+                qContainer.querySelector('[data-correct="true"]').classList.add('qok');
             }
-
-            let selectedWord = null;
-            let selectedDef = null;
-
-            window.handleMatchClick = function(btn) {
-                if (btn.classList.contains('correct')) return;
-
-                if (btn === selectedWord) { selectedWord.classList.remove('selected'); selectedWord = null; return; }
-                if (btn === selectedDef) { selectedDef.classList.remove('selected'); selectedDef = null; return; }
-
-                if (btn.dataset.type === 'word') {
-                    if (selectedWord) selectedWord.classList.remove('selected');
-                    selectedWord = btn;
-                    selectedWord.classList.add('selected');
-                } else {
-                    if (selectedDef) selectedDef.classList.remove('selected');
-                    selectedDef = btn;
-                    selectedDef.classList.add('selected');
-                }
-
-                if (selectedWord && selectedDef) {
-                    const wBtn = selectedWord;
-                    const dBtn = selectedDef;
-                    const wId = parseInt(wBtn.dataset.id, 10);
-                    const dId = parseInt(dBtn.dataset.id, 10);
-
-                    selectedWord.classList.remove('selected');
-                    selectedDef.classList.remove('selected');
-                    selectedWord = null;
-                    selectedDef = null;
-
-                    // Record only the FIRST def_id attempted for each word — this is what
-                    // the server grades against. Retries don't overwrite it.
-                    if (!(wId in matchFirstAttempts)) {
-                        matchFirstAttempts[wId] = dId;
-                    }
-
-                    if (wId === dId) {
-                        wBtn.classList.add('correct');
-                        dBtn.classList.add('correct');
-                        answeredMatch++;
-                        if (answeredMatch === matchCount) {
-                            finishQuiz();
-                        }
-                    } else {
-                        wBtn.classList.add('wrong');
-                        dBtn.classList.add('wrong');
-                        setTimeout(() => {
-                            wBtn.classList.remove('wrong');
-                            dBtn.classList.remove('wrong');
-                        }, 800);
-                    }
-                }
-            };
-
-            function finishQuiz() {
-                const matches = Object.entries(matchFirstAttempts).map(([w, d]) => ({
-                    word_id: parseInt(w, 10),
-                    def_id: d,
-                }));
-                const payload = { mc: mcAnswers, matches: matches };
-                document.getElementById('form-answers').value = JSON.stringify(payload);
-                document.getElementById('submit-section').classList.remove('hidden-section');
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-            }
+            setProgress(currentMCIndex + 1);
+            btnCheck.classList.add('hidden-section');
+            btnNext.classList.remove('hidden-section');
         });
-    </script>
-</body>
-</html>
+
+        btnNext.addEventListener('click', () => {
+            currentMCIndex++;
+            if (currentMCIndex < mcCards.length) renderMCQuestion();
+            else startMatchingSection();
+        });
+
+        renderMCQuestion();
+        setScore();
+
+        function startMatchingSection() {
+            mcSection.classList.add('hidden-section');
+            matchSection.classList.remove('hidden-section');
+            qctr.innerText = 'Matching round';
+            const matchCards = shuffle(cards).slice(0, matchCount);
+            const matchWordsList = shuffle(matchCards);
+            const matchDefsList = shuffle(matchCards);
+            const wContainer = document.getElementById('match-words');
+            const dContainer = document.getElementById('match-defs');
+            matchWordsList.forEach(card => {
+                const btn = document.createElement('button');
+                btn.className = "match-btn";
+                btn.innerText = card.word;
+                btn.dataset.id = card.id;
+                btn.dataset.type = 'word';
+                btn.onclick = () => handleMatchClick(btn);
+                wContainer.appendChild(btn);
+            });
+            matchDefsList.forEach(card => {
+                const btn = document.createElement('button');
+                btn.className = "match-btn";
+                btn.innerText = card.definition;
+                btn.dataset.id = card.id;
+                btn.dataset.type = 'def';
+                btn.onclick = () => handleMatchClick(btn);
+                dContainer.appendChild(btn);
+            });
+        }
+
+        let selectedWord = null;
+        let selectedDef = null;
+        window.handleMatchClick = function(btn) {
+            if (btn.classList.contains('correct')) return;
+            if (btn === selectedWord) { selectedWord.classList.remove('selected'); selectedWord = null; return; }
+            if (btn === selectedDef) { selectedDef.classList.remove('selected'); selectedDef = null; return; }
+            if (btn.dataset.type === 'word') {
+                if (selectedWord) selectedWord.classList.remove('selected');
+                selectedWord = btn; selectedWord.classList.add('selected');
+            } else {
+                if (selectedDef) selectedDef.classList.remove('selected');
+                selectedDef = btn; selectedDef.classList.add('selected');
+            }
+            if (selectedWord && selectedDef) {
+                const wBtn = selectedWord, dBtn = selectedDef;
+                const wId = parseInt(wBtn.dataset.id, 10);
+                const dId = parseInt(dBtn.dataset.id, 10);
+                selectedWord.classList.remove('selected');
+                selectedDef.classList.remove('selected');
+                selectedWord = null; selectedDef = null;
+                if (!(wId in matchFirstAttempts)) matchFirstAttempts[wId] = dId;
+                if (wId === dId) {
+                    wBtn.classList.add('correct'); dBtn.classList.add('correct');
+                    answeredMatch++;
+                    if (matchFirstAttempts[wId] === wId) { score++; setScore(); }
+                    setProgress(mcCards.length + answeredMatch);
+                    if (answeredMatch === matchCount) finishQuiz();
+                } else {
+                    wBtn.classList.add('wrong'); dBtn.classList.add('wrong');
+                    setTimeout(() => { wBtn.classList.remove('wrong'); dBtn.classList.remove('wrong'); }, 800);
+                }
+            }
+        };
+
+        function finishQuiz() {
+            const matches = Object.entries(matchFirstAttempts).map(([w, d]) => ({ word_id: parseInt(w, 10), def_id: d }));
+            document.getElementById('form-answers').value = JSON.stringify({ mc: mcAnswers, matches });
+            document.getElementById('submit-section').classList.remove('hidden-section');
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+    });
+</script>
+{% endblock %}

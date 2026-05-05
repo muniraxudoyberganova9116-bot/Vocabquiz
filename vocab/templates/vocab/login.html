@@ -1,34 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Login | VocabMaster</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .bg-bone { background-color: #F0EFE7; }
-        .text-navy { color: #003153; }
-        .bg-navy { background-color: #003153; }
-    </style>
-</head>
-<body class="bg-bone text-navy font-sans min-h-screen flex items-center justify-center">
-    <div class="bg-white p-10 rounded-3xl shadow-xl w-full max-w-md">
-        <h2 class="text-3xl font-black mb-6 text-center">Welcome Back</h2>
-        {% if error %}
-        <p class="text-red-500 font-bold mb-4 text-center">{{ error }}</p>
-        {% endif %}
-        <form method="POST" class="space-y-4">
+{% extends "vocab/base.html" %}
+{% block title %}Sign in &mdash; Vocab~Master{% endblock %}
+
+{% block content %}
+<section class="auth reveal">
+    <div class="auth-card surface">
+        <span class="eyebrow">Sign in</span>
+        <h1 class="auth-h">Welcome back.</h1>
+        <p class="auth-p meta-text">Pick up where you left off.</p>
+
+        <form method="POST" class="auth-form">
             {% csrf_token %}
-            <div>
-                <label class="block font-bold mb-1">Username</label>
-                <input type="text" name="username" required class="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-navy outline-none">
+            {% if error %}<p class="auth-err">{{ error }}</p>{% endif %}
+            <div class="field">
+                <label for="id_username">Username</label>
+                <input id="id_username" type="text" name="username" required autocomplete="username" autofocus>
             </div>
-            <div>
-                <label class="block font-bold mb-1">Password</label>
-                <input type="password" name="password" required class="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-navy outline-none">
+            <div class="field">
+                <label for="id_password">Password</label>
+                <input id="id_password" type="password" name="password" required autocomplete="current-password">
             </div>
-            <button type="submit" class="w-full bg-yellow-400 text-navy font-black py-3 rounded-xl hover:bg-yellow-500 shadow-[0_4px_0_rgb(161,98,7)] active:shadow-none active:translate-y-1">Login</button>
+            <button type="submit" class="btn accent full large">Sign in <span class="arrow">&rarr;</span></button>
         </form>
-        <p class="mt-4 text-center text-sm font-bold opacity-70">New here? <a href="{% url 'register' %}" class="text-blue-600">Create Account</a></p>
+
+        <p class="auth-alt">Don't have an account? <a href="{% url 'register' %}" class="text-link">Create one</a></p>
     </div>
-</body>
-</html>
+</section>
+
+<style>
+    .auth { display: flex; justify-content: center; padding: 32px 0; }
+    .auth-card { width: 100%; max-width: 420px; padding: 28px 28px; display: flex; flex-direction: column; gap: 6px; }
+    .auth-h { font-family: var(--serif); font-size: 28px; font-weight: 500; margin: 8px 0 4px; letter-spacing: -0.015em; }
+    .auth-p { margin: 0 0 18px; }
+
+    .auth-form { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-family: var(--sans); font-size: 12px; font-weight: 600; color: var(--t-secondary); }
+    .field input {
+        background: var(--bg); color: var(--t-primary);
+        border: 0.5px solid var(--b-secondary); border-radius: var(--r-md);
+        padding: 10px 12px;
+        font-family: var(--sans); font-size: 14px;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .auth-err {
+        font-family: var(--sans); font-size: 13px; font-weight: 500;
+        color: var(--s-danger-fg); background: var(--s-danger-bg);
+        padding: 9px 12px; border-radius: var(--r-md); margin: 0;
+    }
+    .auth-alt { font-family: var(--sans); color: var(--t-secondary); margin: 16px 0 0; font-size: 13px; }
+</style>
+{% endblock %}

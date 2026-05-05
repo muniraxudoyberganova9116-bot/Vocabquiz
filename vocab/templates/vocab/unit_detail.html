@@ -1,53 +1,106 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VocabMaster | {{ unit.title }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .bg-bone { background-color: #F0EFE7; }
-        .text-navy { color: #003153; }
-    </style>
-</head>
-<body class="bg-bone text-navy font-sans py-12 px-6">
-    <div class="max-w-3xl mx-auto">
-        <div class="mb-10 text-center">
-            <h1 class="text-5xl font-black mb-2">{{ unit.title }}</h1>
-            
-            {% if request.user.is_authenticated and progress %}
-                {% if progress.is_completed %}
-                    <span class="inline-block mt-2 bg-green-500 text-white font-bold px-4 py-1 rounded-full text-sm shadow">
-                        ✅ Completed 
-                    </span>
-                {% else %}
-                    <span class="inline-block mt-2 bg-yellow-400 text-navy font-bold px-4 py-1 rounded-full text-sm shadow">
-                        ⏳ Incomplete (Best: {{ progress.accuracy|default:"0.0" }}%)
-                    </span>
-                {% endif %}
+{% extends "vocab/base.html" %}
+{% block title %}{{ unit.title }} &mdash; Vocab~Master{% endblock %}
+
+{% block content %}
+<div class="back-row reveal">
+    <a href="{% url 'unit_hub' %}" class="back-link">&larr; Library</a>
+</div>
+
+<section class="ud-head reveal">
+    <div class="ud-head-top">
+        <span class="eyebrow">Unit</span>
+        {% if progress and progress.is_completed %}
+            <span class="badge badge-success">Completed</span>
+        {% elif progress %}
+            <span class="badge badge-info">In progress</span>
+        {% else %}
+            <span class="badge badge-neutral">Not started</span>
+        {% endif %}
+    </div>
+    <h1 class="display ud-title">{{ unit.title }}</h1>
+
+    <div class="ud-prog">
+        <div class="ud-prog-row">
+            <span class="meta-text">{% if progress %}Best accuracy{% else %}No attempts yet{% endif %}</span>
+            <span class="prog-value {% if progress.is_completed %}t-success{% elif progress %}t-info{% else %}t-tertiary{% endif %}">
+                {% if progress %}{{ progress.accuracy|floatformat:0 }}%{% else %}—{% endif %}
+            </span>
+        </div>
+        <div class="ptrack">
+            {% if progress %}
+                <div class="pfill {% if progress.is_completed %}pfill-success{% else %}pfill-info{% endif %}" style="width: {{ progress.accuracy }}%;"></div>
             {% endif %}
         </div>
-
-        <div class="grid md:grid-cols-2 gap-8">
-            <!-- Flashcards Option -->
-            <a href="{% url 'flashcards' unit.slug %}" class="bg-white p-8 rounded-[32px] shadow-xl hover:-translate-y-2 transition-transform text-center flex flex-col items-center justify-center min-h-[250px] border-b-4 border-blue-500">
-                <div class="text-6xl mb-4">🗂️</div>
-                <h3 class="font-black text-2xl">Flashcards</h3>
-                <p class="text-sm opacity-70 mt-2">Review words and their definitions</p>
-            </a>
-            
-            <!-- Quiz Option -->
-            <a href="{% url 'quiz_detail' unit.slug %}" class="bg-white p-8 rounded-[32px] shadow-xl hover:-translate-y-2 transition-transform text-center flex flex-col items-center justify-center min-h-[250px] border-b-4 border-yellow-400">
-                <div class="text-6xl mb-4">🎯</div>
-                <h3 class="font-black text-2xl">Quiz Mode</h3>
-                <p class="text-sm opacity-70 mt-2">Test your knowledge to earn XP</p>
-            </a>
-        </div>
-
-        <div class="mt-12 flex justify-center space-x-4">
-            <a href="{% url 'unit_hub' %}" class="text-sm font-black underline hover:text-blue-600">← Back to All Units</a>
-            <a href="{% url 'ranking' %}" class="text-sm font-black underline hover:text-blue-600 ml-4">🏆 Your Ranking</a>
-        </div>
     </div>
-</body>
-</html>
+</section>
+
+<section class="ud-actions reveal d2">
+    <div class="action surface action-step1">
+        <span class="action-num">Step 1</span>
+        <h2>Read the flashcards</h2>
+        <p>Flip through the words. Mark the ones you don't know to revisit.</p>
+        <a href="{% url 'flashcards' unit.slug %}" class="btn ghost">Open flashcards <span class="arrow">&rarr;</span></a>
+    </div>
+    <div class="action surface action-primary">
+        <span class="action-num">Step 2</span>
+        <h2>Take the quiz</h2>
+        <p>Multiple choice followed by matching. Score 80% or higher to master this unit.</p>
+        <a href="{% url 'quiz_detail' unit.slug %}" class="btn">{% if progress %}Take quiz again{% else %}Start quiz{% endif %} <span class="arrow">&rarr;</span></a>
+    </div>
+</section>
+
+<section class="ud-words reveal d3">
+    <h3 class="ud-words-h">Words in this unit <span class="meta-text">&middot; {{ unit.flashcards.count }}</span></h3>
+    <div class="word-list">
+        {% for card in unit.flashcards.all %}
+        <div class="word-row">
+            <span class="word-w">{{ card.word }}</span>
+            <span class="word-d">{{ card.definition }}</span>
+        </div>
+        {% empty %}
+        <p class="meta-text">No words yet.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<style>
+    .back-row { padding: 0 0 12px; }
+
+    .ud-head { margin-bottom: 20px; }
+    .ud-head-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .ud-title { font-size: clamp(36px, 5.4vw, 56px); margin: 0 0 18px; }
+    .ud-prog { max-width: 420px; display: flex; flex-direction: column; gap: 5px; }
+    .ud-prog-row { display: flex; justify-content: space-between; font-size: 12px; }
+    .prog-value { font-weight: 600; font-size: 12px; }
+
+    .ud-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+    .action { display: flex; flex-direction: column; gap: 10px; padding: 24px; }
+    .action-num { font-family: var(--sans); font-size: 11px; font-weight: 600; color: var(--s-info-fg); letter-spacing: 0.04em; text-transform: uppercase; }
+    .action h2 { font-family: var(--serif); font-size: 22px; font-weight: 500; margin: 2px 0 0; }
+    .action p { font-size: 14px; color: var(--t-secondary); margin: 0 0 6px; line-height: 1.5; }
+    .action .btn { align-self: flex-start; }
+    .action-step1 { background: var(--s-info-bg); border-color: var(--s-info-bd); }
+    .action-step1 .btn.ghost { border-color: var(--s-info-fg); color: var(--s-info-fg); }
+    .action-step1 .btn.ghost:hover { background: var(--s-info-fg); color: var(--bg); }
+    .action-primary { background: var(--accent); border-color: var(--accent); color: #FFFFFF; }
+    .action-primary .action-num { color: rgba(255,255,255,0.78); }
+    .action-primary p { color: rgba(255,255,255,0.85); }
+    .action-primary .btn { background: #FFFFFF; color: var(--accent); border-color: #FFFFFF; }
+    .action-primary .btn:hover { background: var(--t-primary); color: #FFFFFF; border-color: var(--t-primary); opacity: 1; }
+
+    .ud-words { margin-top: 32px; }
+    .ud-words-h { font-family: var(--serif); font-size: 18px; font-weight: 500; margin: 0 0 14px; display: flex; align-items: baseline; gap: 8px; }
+    .word-list { border-top: 0.5px solid var(--b-tertiary); }
+    .word-row {
+        display: grid; grid-template-columns: 180px 1fr; gap: 16px;
+        padding: 12px 0; border-bottom: 0.5px solid var(--b-tertiary);
+    }
+    .word-w { font-family: var(--serif); font-size: 16px; font-weight: 500; color: var(--t-primary); }
+    .word-d { font-size: 14px; color: var(--t-secondary); line-height: 1.55; }
+
+    @media (max-width: 720px) {
+        .ud-actions { grid-template-columns: 1fr; }
+        .word-row { grid-template-columns: 1fr; gap: 4px; }
+    }
+</style>
+{% endblock %}

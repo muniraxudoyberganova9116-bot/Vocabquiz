@@ -58,7 +58,7 @@ def home(request):
 
 @login_required(login_url='login')
 def unit_hub(request):
-    units = list(Unit.objects.all())
+    units = list(Unit.objects.prefetch_related('flashcards').all())
     progress_by_unit = {
         p.unit_id: p
         for p in UnitProgress.objects.filter(user=request.user)
@@ -66,11 +66,24 @@ def unit_hub(request):
 
     units_with_progress = []
     completed_count = 0
+    best_accuracy = 0.0
     for u in units:
         p = progress_by_unit.get(u.id)
         if p and p.is_completed:
             completed_count += 1
-        units_with_progress.append({'unit': u, 'progress': p})
+        if p and p.accuracy and p.accuracy > best_accuracy:
+            best_accuracy = p.accuracy
+        flashcards = list(u.flashcards.all())
+        accuracy = (p.accuracy if p else 0.0) or 0.0
+        xp_earned = int(round(30 * (accuracy / 100)))
+        units_with_progress.append({
+            'unit': u,
+            'progress': p,
+            'preview_words': [f.word for f in flashcards[:4]],
+            'extra_words': max(0, len(flashcards) - 4),
+            'total_words': len(flashcards),
+            'xp_earned': xp_earned,
+        })
 
     profile = _get_or_create_profile(request.user)
     total_units = len(units)
@@ -82,6 +95,7 @@ def unit_hub(request):
         'completed_count': completed_count,
         'total_units': total_units,
         'completion_pct': completion_pct,
+        'best_accuracy': best_accuracy,
     })
 
 

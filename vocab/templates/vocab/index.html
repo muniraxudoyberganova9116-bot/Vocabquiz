@@ -1,126 +1,141 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VocabMaster | Home</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-    <style>
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); }
-        .bg-bone { background-color: #F0EFE7; }
-        .text-navy { color: #003153; }
-        .bg-navy { background-color: #003153; }
-    </style>
-</head>
-<body class="bg-bone text-navy font-sans selection:bg-yellow-200">
+{% extends "vocab/base.html" %}
+{% block title %}Vocab~Master &mdash; Study vocabulary properly{% endblock %}
 
-    <nav class="flex justify-between items-center px-8 py-6 max-w-7xl mx-auto">
-        <div class="text-2xl font-black tracking-tighter">VOCAB<span class="text-yellow-500">MASTER</span></div>
-        <div class="hidden md:flex gap-8 font-bold text-sm uppercase tracking-widest">
-            <!-- Navigation links removed. Everything is accessible via Start Learning. -->
-        </div>
-        <div>
-            {% if user.is_authenticated %}
-                <a href="{% url 'unit_hub' %}" class="bg-navy text-white px-6 py-2 rounded-full font-bold hover:scale-105 transition-transform shadow-lg mr-4">
-                    Start Learning
-                </a>
-                <form method="POST" action="{% url 'logout' %}" class="inline">
-                    {% csrf_token %}
-                    <button type="submit" class="text-navy font-bold hover:text-red-500 transition">Logout</button>
-                </form>
-            {% else %}
-                <a href="{% url 'login' %}" class="bg-navy text-white px-6 py-2 rounded-full font-bold hover:scale-105 transition-transform shadow-lg">
-                    Start Learning / Login
-                </a>
-            {% endif %}
-        </div>
-    </nav>
+{% block content %}
+<section class="hero reveal">
+    <span class="eyebrow">SAT &middot; GRE Vocabulary</span>
+    <h1 class="display hero-title">
+        Study the words<br>
+        that <em>actually</em> show up.
+    </h1>
+    <p class="hero-blurb">
+        Flashcards for daily review and a quiz that grades itself.
+        Track what you've mastered and climb the leaderboard.
+    </p>
+    <div class="hero-cta">
+        {% if user.is_authenticated %}
+            <a href="{% url 'unit_hub' %}" class="btn accent large">Open the library <span class="arrow">&rarr;</span></a>
+        {% else %}
+            <a href="{% url 'register' %}" class="btn accent large">Start learning &mdash; free <span class="arrow">&rarr;</span></a>
+            <a href="{% url 'login' %}" class="text-link hero-alt">Already have an account? Sign in.</a>
+        {% endif %}
+    </div>
+</section>
 
-    <section class="max-w-7xl mx-auto px-8 py-16 grid md:grid-cols-2 gap-12 items-center">
-        <div class="animate__animated animate__fadeInLeft">
-            <h1 class="text-6xl md:text-7xl font-black leading-tight mb-6">
-                Master Words. <br> <span class="text-yellow-500">Own the Lead.</span>
-            </h1>
-            <p class="text-lg opacity-80 mb-8 max-w-md">
-                The ultimate gamified flashcard system. Study smarter, compete in groups, and watch your daily progress soar.
-            </p>
-            <div class="flex gap-4">
-                <a href="{% url 'unit_hub' %}" class="bg-yellow-400 text-navy px-8 py-4 rounded-2xl font-black shadow-[0_6px_0_rgb(161,98,7)] active:shadow-none active:translate-y-1 transition-all">
-                    Get Started — It's Free
-                </a>
-            </div>
-        </div>
-
-        <div class="animate__animated animate__fadeInRight bg-white p-8 rounded-[40px] shadow-2xl border-b-8 border-gray-200 relative overflow-hidden">
-            <div class="flex justify-between items-center mb-8">
-                <h3 class="font-bold">Daily Activity</h3>
-                <span class="text-xs font-bold bg-green-100 text-green-700 px-3 py-1 rounded-full">80% Mastery</span>
-            </div>
-            
-            <div class="space-y-4">
-                <div class="space-y-1">
-                    <div class="flex justify-between text-xs font-bold"><span>Unit 1: Basics</span><span>100%</span></div>
-                    <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden"><div class="bg-green-400 h-full w-full"></div></div>
+<section class="features-wrap">
+    <div class="features-head">
+        <span class="feat-eyebrow"><span class="rule-tick"></span>How it works</span>
+        <p class="feat-blurb">Three steps. No streaks, no mascots, no shortcuts.</p>
+    </div>
+    <div class="features">
+        <article class="feature feat-reveal" style="--i:0;">
+            <span class="feat-ghost">01</span>
+            <div class="feat-body">
+                <div class="feat-top">
+                    <span class="feat-title">Read the cards</span>
+                    <span class="feat-tag">FLASHCARDS</span>
                 </div>
-                <div class="space-y-1">
-                    <div class="flex justify-between text-xs font-bold"><span>Unit 2: Advanced Verbs</span><span>45%</span></div>
-                    <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden"><div class="bg-yellow-400 h-full w-[45%]"></div></div>
+                <p class="feat-text">Flip, pause, defer the ones you don't know yet. They come back until you do.</p>
+            </div>
+        </article>
+        <article class="feature feat-reveal" style="--i:1;">
+            <span class="feat-ghost">02</span>
+            <div class="feat-body">
+                <div class="feat-top">
+                    <span class="feat-title">Take the quiz</span>
+                    <span class="feat-tag">GRADED</span>
                 </div>
-                <div class="space-y-1 opacity-40">
-                    <div class="flex justify-between text-xs font-bold"><span>Unit 3: Science Terms</span><span>Locked 🔒</span></div>
-                    <div class="w-full bg-gray-100 h-3 rounded-full"></div>
+                <p class="feat-text">Multiple-choice and matching, graded server-side. Score 80% to master a unit.</p>
+            </div>
+        </article>
+        <article class="feature feat-reveal" style="--i:2;">
+            <span class="feat-ghost">03</span>
+            <div class="feat-body">
+                <div class="feat-top">
+                    <span class="feat-title">Climb the board</span>
+                    <span class="feat-tag">XP &middot; LEADERBOARD</span>
                 </div>
+                <p class="feat-text">Earn XP only when you improve. No fake streaks, no mascots, no confetti.</p>
             </div>
+        </article>
+    </div>
+</section>
 
-            <div class="mt-8 pt-8 border-t border-gray-100 flex items-center gap-4">
-                <div class="w-12 h-12 bg-navy rounded-full flex items-center justify-center text-white font-bold text-xl">1</div>
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase">Current Ranking</p>
-                    <p class="font-black text-lg">Alex Rodriguez <span class="text-yellow-500">🏆</span></p>
-                </div>
-            </div>
-        </div>
-    </section>
+<style>
+    .hero { padding: 32px 0 40px; max-width: 820px; }
+    .hero-title { font-size: clamp(40px, 7vw, 80px); margin: 14px 0 20px; }
+    .hero-blurb { font-family: var(--sans); font-size: 16px; line-height: 1.6; color: var(--t-secondary); max-width: 56ch; margin: 0 0 28px; }
+    .hero-cta { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+    .hero-alt { font-size: 13px; }
 
-    <section class="max-w-7xl mx-auto px-8 py-24">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-black mb-4">Everything you need to learn.</h2>
-            <div class="h-1 w-20 bg-yellow-500 mx-auto"></div>
-        </div>
+    .features-wrap { padding: 36px 0 8px; }
+    .features-head {
+        display: flex; align-items: end; justify-content: space-between;
+        gap: 24px; flex-wrap: wrap; margin-bottom: 18px;
+    }
+    .feat-eyebrow {
+        display: inline-flex; align-items: center; gap: 14px;
+        font-family: var(--sans); font-size: 10px; font-weight: 700;
+        letter-spacing: 0.22em; text-transform: uppercase; color: var(--t-tertiary);
+    }
+    .rule-tick { display: inline-block; width: 28px; height: 1px; background: var(--b-secondary); }
+    .feat-blurb { font-family: var(--sans); font-size: 14px; color: var(--t-secondary); margin: 0; max-width: 36ch; font-weight: 400; }
 
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="p-10 bg-white rounded-3xl hover:-translate-y-2 transition shadow-xl group">
-                <div class="text-4xl mb-4 group-hover:animate-bounce">⭐</div>
-                <h3 class="text-xl font-black mb-2">Smart Flashcards</h3>
-                <p class="opacity-70 text-sm">Our "Review Later" system ensures you never forget a word. Tag difficult words and they'll reappear until you master them.</p>
-            </div>
-            <div class="p-10 bg-white rounded-3xl hover:-translate-y-2 transition shadow-xl group">
-                <div class="text-4xl mb-4 group-hover:animate-bounce">📝</div>
-                <h3 class="text-xl font-black mb-2">Instant Quizzes</h3>
-                <p class="opacity-70 text-sm">Automatically generate quizzes from your card decks. Earn points for speed and accuracy.</p>
-            </div>
-            <div class="p-10 bg-white rounded-3xl hover:-translate-y-2 transition shadow-xl group">
-                <div class="text-4xl mb-4 group-hover:animate-bounce">🏆</div>
-                <h3 class="text-xl font-black mb-2">Group Ranking</h3>
-                <p class="opacity-70 text-sm">Join study groups with your classmates and fight for the top spot on the weekly dashboard.</p>
-            </div>
-        </div>
-    </section>
+    .features {
+        display: grid; grid-template-columns: repeat(3, 1fr);
+        background: var(--b-tertiary);
+        border: 0.5px solid var(--b-tertiary);
+        border-radius: 0;
+        gap: 1px;
+        overflow: hidden;
+    }
+    .feature {
+        position: relative; background: var(--bg);
+        padding: 36px 32px 36px;
+        min-height: 240px; overflow: hidden;
+        transition: filter 0.2s ease, opacity 0.2s ease, background 0.2s ease;
+    }
+    .feat-ghost {
+        position: absolute; top: -22px; right: -8px;
+        font-family: 'Arial Black', 'Helvetica Neue', system-ui, sans-serif;
+        font-weight: 900; font-size: 128px; line-height: 1;
+        letter-spacing: -0.06em;
+        color: var(--bg-3); opacity: 0.55;
+        pointer-events: none;
+        transition: opacity 0.25s ease, color 0.25s ease, transform 0.25s ease;
+    }
+    .feature:hover .feat-ghost { opacity: 1; color: var(--accent-soft); transform: translate(-3px, 3px); }
 
-    <footer class="py-12 border-t border-gray-200 text-center opacity-50 text-xs font-bold">
-        &copy; 2026 VOCABMASTER AI. ALL RIGHTS RESERVED.
-    </footer>
+    .feat-body { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 28px; height: 100%; }
+    .feat-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .feat-title {
+        font-family: var(--sans); font-size: 11px; font-weight: 700;
+        letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent);
+    }
+    .feat-tag {
+        font-family: var(--mono); font-size: 10px; font-weight: 500;
+        color: var(--t-tertiary); border: 0.5px solid var(--b-secondary);
+        padding: 3px 8px; border-radius: 0; white-space: nowrap;
+    }
+    .feat-text { font-family: var(--sans); font-size: 14px; color: var(--t-secondary); margin: 0; line-height: 1.65; max-width: 32ch; font-weight: 400; }
 
-    <style>
-        @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-        .animate-marquee {
-            display: inline-block;
-            animation: marquee 20s linear infinite;
-        }
-    </style>
-</body>
-</html>
+    /* hover: blur siblings (Examora-style) */
+    .features:hover .feature:not(:hover) { filter: blur(2px); opacity: 0.4; }
+
+    /* staggered entrance */
+    .feat-reveal {
+        opacity: 0; transform: translateY(16px);
+        animation: feat-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation-delay: calc(0.15s + var(--i, 0) * 0.1s);
+    }
+    @keyframes feat-rise {
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 720px) {
+        .features { grid-template-columns: 1fr; }
+        .feature { min-height: 200px; padding: 28px 24px; }
+        .feat-ghost { font-size: 96px; }
+    }
+</style>
+{% endblock %}

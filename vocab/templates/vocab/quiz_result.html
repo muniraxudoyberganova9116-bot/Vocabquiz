@@ -1,64 +1,67 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VocabMaster | Quiz Result</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .bg-bone { background-color: #F0EFE7; }
-        .text-navy { color: #003153; }
-    </style>
-</head>
-<body class="bg-bone text-navy font-sans py-12 px-6 flex items-center justify-center min-h-screen">
-    <div class="max-w-2xl w-full text-center">
-        <div class="bg-white p-12 rounded-[32px] shadow-2xl border-b-[8px] {% if is_completed %}border-green-500{% else %}border-red-500{% endif %} hover:translate-y-[-4px] transition-transform">
-            
-            {% if is_completed %}
-                <div class="text-7xl mb-6">🎉</div>
-                <h1 class="text-5xl font-black mb-4 text-green-600">
-                    {% if just_completed %}Unit Mastered!{% else %}Unit Already Mastered{% endif %}
-                </h1>
-                <p class="text-xl font-bold mb-2">You scored {{ accuracy }}% on this attempt</p>
-                <p class="text-sm opacity-60 mb-6">Best: {{ best_accuracy }}%</p>
-                {% if xp_gained %}
-                <div class="inline-block bg-yellow-100 text-yellow-600 px-6 py-3 rounded-full font-black text-2xl mb-8">
-                    +{{ xp_gained }} XP Earned!
-                </div>
-                {% else %}
-                <div class="inline-block bg-gray-100 text-gray-500 px-6 py-3 rounded-full font-black text-lg mb-8">
-                    No new XP — beat your best to earn more.
-                </div>
-                {% endif %}
-            {% else %}
-                <div class="text-7xl mb-6">💪</div>
-                <h1 class="text-5xl font-black mb-4">Keep Trying!</h1>
-                <p class="text-xl font-bold mb-2">You scored {{ accuracy }}% (80% needed to pass)</p>
-                <p class="text-sm opacity-60 mb-6">Best: {{ best_accuracy }}%</p>
-                {% if xp_gained %}
-                <div class="inline-block bg-yellow-100 text-yellow-600 px-6 py-3 rounded-full font-black text-lg mb-8">
-                    +{{ xp_gained }} XP for the improvement!
-                </div>
-                {% else %}
-                <div class="inline-block bg-gray-100 text-gray-500 px-6 py-3 rounded-full font-black text-lg mb-8">
-                    No new XP — beat your best to earn more.
-                </div>
-                {% endif %}
-            {% endif %}
+{% extends "vocab/base.html" %}
+{% block title %}Result &mdash; {{ unit.title }}{% endblock %}
 
-            <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <a href="{% url 'unit_detail' unit.slug %}" class="bg-gray-100 p-4 rounded-xl font-bold hover:bg-gray-200 transition-colors">
-                    Back to {{ unit.title }}
-                </a>
-                <a href="{% url 'ranking' %}" class="bg-navy text-white p-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all">
-                    🏆 View Your Ranking
-                </a>
-            </div>
-            
-            <div class="mt-8">
-                <a href="{% url 'unit_hub' %}" class="text-sm font-black underline hover:text-blue-600">← Back to Learn Hub</a>
-            </div>
+{% block content %}
+<div class="back-row reveal">
+    <a href="{% url 'unit_detail' unit.slug %}" class="back-link">&larr; {{ unit.title }}</a>
+    <span class="meta-text">Quiz result</span>
+</div>
+
+<section class="res reveal d2">
+    <div class="res-head">
+        {% if is_completed %}
+            <span class="badge badge-success">Mastered</span>
+        {% elif accuracy >= 60 %}
+            <span class="badge badge-info">Close</span>
+        {% else %}
+            <span class="badge badge-neutral">Keep practicing</span>
+        {% endif %}
+        <h1 class="display res-title">
+            {% if is_completed %}
+                {% if just_completed %}You mastered <em>{{ unit.title }}</em>.{% else %}<em>{{ unit.title }}</em> still mastered.{% endif %}
+            {% else %}
+                {{ accuracy }}% &mdash; <em>80%</em> needed to master.
+            {% endif %}
+        </h1>
+        <p class="meta-text res-sub">
+            {% if xp_gained %}+{{ xp_gained }} XP earned this attempt.{% else %}No XP this round &mdash; XP is awarded only when you beat your best.{% endif %}
+        </p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat tint-info">
+            <span class="stat-label">This attempt</span>
+            <span class="stat-value info">{{ accuracy }}%</span>
+        </div>
+        <div class="stat tint-success">
+            <span class="stat-label">Best on record</span>
+            <span class="stat-value success">{{ best_accuracy }}%</span>
+        </div>
+        <div class="stat tint-accent">
+            <span class="stat-label">XP earned</span>
+            <span class="stat-value xp">{% if xp_gained %}+{{ xp_gained }}{% else %}0{% endif %}</span>
         </div>
     </div>
-</body>
-</html>
+
+    <div class="res-actions">
+        <a href="{% url 'unit_detail' unit.slug %}" class="btn ghost">Back to {{ unit.title }}</a>
+        <a href="{% url 'quiz_detail' unit.slug %}" class="btn">Try again</a>
+        <a href="{% url 'ranking' %}" class="btn accent">View leaderboard <span class="arrow">&rarr;</span></a>
+    </div>
+</section>
+
+<style>
+    .back-row { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 0.5px solid var(--b-tertiary); margin-bottom: 24px; }
+    .res { padding: 8px 0 32px; max-width: 880px; }
+    .res-head { margin-bottom: 24px; }
+    .res-title { font-size: clamp(32px, 5vw, 56px); margin: 12px 0 6px; max-width: 22ch; }
+    .res-title em { font-style: italic; color: var(--accent); }
+    .res-sub { margin: 0; }
+
+    .stats-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px; margin: 8px 0 28px;
+    }
+    .res-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+</style>
+{% endblock %}

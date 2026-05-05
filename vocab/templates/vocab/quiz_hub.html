@@ -1,66 +1,143 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VocabMaster | Choose Quiz</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .bg-bone { background-color: #F0EFE7; }
-        .text-navy { color: #003153; }
-    </style>
-</head>
-<body class="bg-bone text-navy font-sans py-12 px-6">
+{% extends "vocab/base.html" %}
+{% block title %}Library &mdash; Vocab~Master{% endblock %}
 
-    <div class="max-w-4xl mx-auto">
-        <div class="mb-12 text-center">
-            <h1 class="text-5xl font-black mb-2">Learn Vocab</h1>
-            <p class="opacity-60 font-bold uppercase tracking-widest text-sm">Select a flashcard group to begin</p>
-        </div>
+{% block content %}
+<section class="hub-greet reveal">
+    <h1 class="greet-h">Welcome back, {{ user.username }}.</h1>
+    <p class="greet-sub">{{ completed_count }} of {{ total_units }} units completed &middot; {{ profile.total_score }} XP total</p>
+</section>
 
-        <div class="bg-white p-6 rounded-[32px] shadow-xl mb-12 flex items-center justify-between border-b-4 border-gray-200">
-            <div class="flex items-center gap-4">
-                <div class="w-16 h-16 rounded-full border-4 border-yellow-400 flex items-center justify-center font-black text-sm">
-                    {{ completion_pct }}%
-                </div>
-                <div>
-                    <h3 class="font-black text-lg">Units Completed</h3>
-                    <p class="text-xs opacity-60">{{ completed_count }} of {{ total_units }} units mastered &middot; {{ profile.words_mastered }} words mastered</p>
-                </div>
-            </div>
-            <div class="text-right">
-                <p class="text-sm font-bold">Total XP</p>
-                <p class="text-3xl font-black text-blue-600">{{ profile.total_score }}</p>
-            </div>
-        </div>
-
-        <h2 class="text-2xl font-black mb-6 flex items-center gap-2">
-            Available Modules
-            <span class="text-xs bg-navy text-white px-2 py-1 rounded">{{ total_units }}</span>
-        </h2>
-
-        <div class="grid md:grid-cols-2 gap-6">
-            {% for entry in units_with_progress %}
-                <a href="{% url 'unit_detail' entry.unit.slug %}"
-                   class="bg-white p-6 rounded-[32px] shadow-lg hover:translate-y-[-4px] transition-transform font-bold text-xl flex items-center justify-between gap-4">
-                    <span>{{ entry.unit.title }}</span>
-                    {% if entry.progress and entry.progress.is_completed %}
-                        <span class="text-xs bg-green-500 text-white px-3 py-1 rounded-full">✅ Completed</span>
-                    {% elif entry.progress %}
-                        <span class="text-xs bg-yellow-400 text-navy px-3 py-1 rounded-full">{{ entry.progress.accuracy }}%</span>
-                    {% else %}
-                        <span class="text-xs bg-gray-200 text-gray-600 px-3 py-1 rounded-full">New</span>
-                    {% endif %}
-                </a>
-            {% empty %}
-                <div class="col-span-2 text-center text-gray-500 font-bold">No flashcards available yet. Check back soon!</div>
-            {% endfor %}
-        </div>
-
-        <div class="mt-12 text-center">
-            <a href="{% url 'home' %}" class="text-sm font-black underline hover:text-blue-600">← Back to Dashboard</a>
-        </div>
+<div class="stats-grid reveal d2">
+    <div class="stat tint-accent">
+        <span class="stat-label">Total XP</span>
+        <span class="stat-value xp">{{ profile.total_score }}</span>
     </div>
+    <div class="stat tint-success">
+        <span class="stat-label">Words mastered</span>
+        <span class="stat-value success">{{ profile.words_mastered }}</span>
+    </div>
+    <div class="stat tint-info">
+        <span class="stat-label">Best accuracy</span>
+        <span class="stat-value info">{% if best_accuracy %}{{ best_accuracy|floatformat:0 }}%{% else %}—{% endif %}</span>
+    </div>
+</div>
 
-</body>
-</html>
+<div class="unit-grid reveal d3">
+    {% for entry in units_with_progress %}
+    <article class="unit-card {% if entry.progress and entry.progress.is_completed %}is-completed{% elif entry.progress %}is-progress{% else %}is-new{% endif %}">
+        <header class="uc-head">
+            <a href="{% url 'unit_detail' entry.unit.slug %}" class="uc-title-link"><h3 class="uc-title">{{ entry.unit.title }}</h3></a>
+            {% if entry.progress and entry.progress.is_completed %}
+                <span class="badge badge-success">Completed</span>
+            {% elif entry.progress %}
+                <span class="badge badge-info">In progress</span>
+            {% else %}
+                <span class="badge badge-neutral">Not started</span>
+            {% endif %}
+        </header>
+
+        <div class="uc-words">
+            {% for w in entry.preview_words %}<span class="word-tag">{{ w }}</span>{% endfor %}
+            {% if entry.extra_words %}<span class="word-tag">+{{ entry.extra_words }} more</span>{% endif %}
+        </div>
+
+        <div class="uc-prog">
+            <div class="uc-prog-row">
+                <span class="prog-label">{% if entry.progress %}Best accuracy{% else %}No attempts yet{% endif %}</span>
+                <span class="prog-value {% if entry.progress.is_completed %}t-success{% elif entry.progress %}t-info{% else %}t-tertiary{% endif %}">
+                    {% if entry.progress %}{{ entry.progress.accuracy|floatformat:0 }}%{% else %}—{% endif %}
+                </span>
+            </div>
+            <div class="ptrack">
+                {% if entry.progress %}
+                    <div class="pfill {% if entry.progress.is_completed %}pfill-success{% else %}pfill-info{% endif %}" style="width: {{ entry.progress.accuracy }}%;"></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <p class="uc-meta">
+            {% if entry.progress and entry.progress.is_completed %}
+                <span class="t-warning">+{{ entry.xp_earned }} XP earned</span>
+            {% elif entry.progress %}
+                Need 80% to master &middot; +{{ entry.xp_earned }} XP earned
+            {% else %}
+                {{ entry.total_words }} words &middot; 0 XP earned
+            {% endif %}
+        </p>
+
+        <div class="uc-actions">
+            <a href="{% url 'flashcards' entry.unit.slug %}" class="bs">Study</a>
+            <a href="{% url 'quiz_detail' entry.unit.slug %}" class="bs bsp">{% if entry.progress and entry.progress.is_completed %}Quiz again{% elif entry.progress %}Take quiz{% else %}Start quiz{% endif %}</a>
+        </div>
+    </article>
+    {% empty %}
+    <p class="empty">No units have been added yet.</p>
+    {% endfor %}
+</div>
+
+<style>
+    .hub-greet { margin-bottom: 24px; }
+    .greet-h { font-family: var(--serif); font-size: 26px; font-weight: 500; margin: 0 0 4px; line-height: 1.2; letter-spacing: -0.015em; }
+    .greet-sub { font-family: var(--sans); font-size: 13px; color: var(--t-tertiary); margin: 0; }
+
+    .stats-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px; margin-bottom: 28px;
+    }
+
+    .unit-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+    }
+    .unit-card {
+        background: var(--bg);
+        border: 0.5px solid var(--b-tertiary);
+        border-top: 3px solid var(--b-secondary);
+        border-radius: var(--r-lg);
+        padding: 18px 22px 20px;
+        display: flex; flex-direction: column; gap: 12px;
+        transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+    }
+    .unit-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px -10px rgba(14, 26, 45, 0.18); }
+    .unit-card.is-completed { border-top-color: var(--s-success-fg); background: linear-gradient(180deg, var(--s-success-bg) 0%, var(--bg) 40%); }
+    .unit-card.is-progress { border-top-color: var(--s-warning-fg); background: linear-gradient(180deg, var(--s-warning-bg) 0%, var(--bg) 40%); }
+    .unit-card.is-new { border-top-color: var(--accent); }
+
+    .uc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .uc-title-link { display: inline-block; transition: color 0.15s; }
+    .uc-title-link:hover { color: var(--accent); }
+    .uc-title { font-family: var(--serif); font-size: 18px; font-weight: 500; margin: 0; line-height: 1.2; letter-spacing: -0.015em; }
+
+    .uc-words { line-height: 1.9; min-height: 28px; }
+
+    .uc-prog { display: flex; flex-direction: column; gap: 5px; }
+    .uc-prog-row {
+        display: flex; justify-content: space-between;
+        font-size: 11px; color: var(--t-tertiary); font-weight: 500;
+    }
+    .prog-value { font-weight: 600; }
+
+    .uc-meta { font-size: 11px; color: var(--t-tertiary); margin: 0; font-weight: 500; }
+
+    .uc-actions { display: flex; gap: 6px; margin-top: auto; padding-top: 4px; }
+    .bs {
+        flex: 1; display: inline-flex; align-items: center; justify-content: center;
+        padding: 7px 0;
+        background: transparent; color: var(--t-primary);
+        border: 0.5px solid var(--b-secondary); border-radius: var(--r-md);
+        font-family: var(--sans); font-size: 12px; font-weight: 500;
+        cursor: pointer; transition: background 0.15s, opacity 0.15s, border-color 0.15s;
+        text-decoration: none;
+    }
+    .bs:hover { background: var(--bg-2); }
+    .bs.bsp { background: var(--t-primary); color: var(--bg); border-color: var(--t-primary); }
+    .bs.bsp:hover { opacity: 0.85; background: var(--t-primary); }
+
+    .empty { padding: 56px 0; color: var(--t-tertiary); text-align: center; font-style: italic; grid-column: 1 / -1; }
+
+    @media (max-width: 540px) {
+        .stats-grid { grid-template-columns: 1fr 1fr; }
+        .stats-grid .stat:last-child { grid-column: span 2; }
+    }
+</style>
+{% endblock %}

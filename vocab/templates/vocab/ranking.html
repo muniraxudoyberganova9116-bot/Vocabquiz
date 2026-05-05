@@ -1,57 +1,96 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VocabMaster | Leaderboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .bg-bone { background-color: #F0EFE7; }
-        .text-navy { color: #003153; }
-    </style>
-</head>
-<body class="bg-bone text-navy font-sans py-12 px-6">
-    <div class="max-w-3xl mx-auto">
-        <div class="text-center mb-10">
-            <h1 class="text-5xl font-black mb-2">🏆 Leaderboard</h1>
-            <p class="opacity-60 font-bold uppercase tracking-widest text-sm">Top learners in VocabMaster</p>
-            {% if points_to_top_3 %}
-                <p class="mt-4 inline-block bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full font-bold text-sm">
-                    You need {{ points_to_top_3 }} more XP to break into the Top 3! Keep learning!
-                </p>
-            {% endif %}
-        </div>
+{% extends "vocab/base.html" %}
+{% block title %}Leaderboard &mdash; Vocab~Master{% endblock %}
 
-        <div class="bg-white rounded-[32px] overflow-hidden shadow-xl border-b-4 border-gray-200">
-            <ul class="divide-y divide-gray-100">
-                {% for profile in profiles %}
-                <li class="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                    <div class="flex items-center gap-4">
-                        <span class="text-2xl font-black {% if forloop.counter == 1 %}text-yellow-400{% elif forloop.counter == 2 %}text-gray-400{% elif forloop.counter == 3 %}text-yellow-600{% endif %}">
-                            #{{ forloop.counter }}
-                        </span>
-                        <h3 class="font-bold text-xl">
-                            {{ profile.user.username }}
-                            {% if forloop.counter == 1 %} 🥇 {% endif %}
-                            {% if forloop.counter == 2 %} 🥈 {% endif %}
-                            {% if forloop.counter == 3 %} 🥉 {% endif %}
-                        </h3>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-2xl font-black text-blue-600">{{ profile.total_score }} XP</p>
-                    </div>
-                </li>
-                {% empty %}
-                <li class="p-8 text-center text-gray-500 font-bold">No users ranked yet!</li>
-                {% endfor %}
-            </ul>
-        </div>
+{% block content %}
+<section class="lb-head reveal">
+    <h1 class="lb-title">Leaderboard</h1>
+    <p class="meta-text">Top {{ profiles|length }} by total XP</p>
+</section>
 
-        <div class="mt-12 text-center">
-            <a href="{% url 'unit_hub' %}" class="inline-block bg-navy text-white px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl transition-all">
-                Continue Learning
-            </a>
-        </div>
+<div class="surface lb-table reveal d2">
+    <div class="lb-headrow">
+        <span class="meta-text">#</span>
+        <span class="meta-text">User</span>
+        <span class="meta-text lb-xp-h">XP</span>
     </div>
-</body>
-</html>
+    <div class="lb-rows">
+        {% for profile in profiles %}
+        <div class="lb-row {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% endif %} {% if profile.user == request.user %}lb-you{% endif %}">
+            <span class="lb-rank {% if forloop.counter <= 3 %}top3{% endif %}">{{ forloop.counter }}</span>
+            <div class="lb-name">
+                <p class="lb-user">{{ profile.user.username }}{% if profile.user == request.user %} <span class="meta-text lb-you-tag">you</span>{% endif %}</p>
+                <p class="lb-sub meta-text">{{ profile.words_mastered }} words mastered</p>
+            </div>
+            <span class="lb-xp">{{ profile.total_score }}</span>
+        </div>
+        {% empty %}
+        <p class="empty">No scores yet. Be the first.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% if points_to_top_3 %}
+<div class="lb-hint reveal d3">
+    <p class="lb-hint-l">Your position</p>
+    <p class="lb-hint-v">You need <strong>{{ points_to_top_3 }} XP</strong> to break into the top 3.</p>
+</div>
+{% endif %}
+
+<div class="lb-foot reveal d3">
+    <a href="{% url 'unit_hub' %}" class="btn ghost">&larr; Back to library</a>
+</div>
+
+<style>
+    .lb-head { margin-bottom: 20px; }
+    .lb-title { font-family: var(--serif); font-size: 26px; font-weight: 500; margin: 0 0 4px; letter-spacing: -0.015em; }
+
+    .lb-table { padding: 16px 22px; }
+    .lb-headrow {
+        display: grid; grid-template-columns: 32px 1fr auto;
+        gap: 14px; padding-bottom: 10px;
+        border-bottom: 0.5px solid var(--b-tertiary);
+    }
+    .lb-xp-h { text-align: right; }
+
+    .lb-rows { display: flex; flex-direction: column; }
+    .lb-row {
+        display: grid; grid-template-columns: 32px 1fr auto;
+        align-items: center; gap: 14px; padding: 12px 0;
+        border-bottom: 0.5px solid var(--b-tertiary);
+    }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-row.lb-you {
+        background: var(--s-warning-bg);
+        margin: 0 -14px; padding: 12px 14px;
+        border-radius: var(--r-md); border-bottom: none;
+    }
+    .lb-rank {
+        font-size: 13px; font-weight: 500; color: var(--t-tertiary);
+        text-align: center; font-family: var(--mono);
+    }
+    .lb-rank.top3 { color: var(--accent); font-weight: 600; }
+    .lb-row.rank-1 { background: linear-gradient(90deg, var(--accent-soft) 0%, transparent 70%); border-left: 3px solid var(--accent); padding-left: 8px; margin-left: -8px; }
+    .lb-row.rank-2 { background: linear-gradient(90deg, var(--s-info-bg) 0%, transparent 70%); border-left: 3px solid var(--s-info-fg); padding-left: 8px; margin-left: -8px; }
+    .lb-row.rank-3 { background: linear-gradient(90deg, var(--s-success-bg) 0%, transparent 70%); border-left: 3px solid var(--s-success-fg); padding-left: 8px; margin-left: -8px; }
+    .lb-name { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .lb-user { font-size: 14px; font-weight: 500; margin: 0; color: var(--t-primary); font-family: var(--sans); }
+    .lb-row.lb-you .lb-user { font-weight: 600; }
+    .lb-you-tag { color: var(--s-warning-fg); font-weight: 500; margin-left: 4px; }
+    .lb-sub { margin: 0; font-size: 11px; }
+    .lb-xp { font-size: 14px; font-weight: 500; color: var(--accent); font-family: var(--mono); font-feature-settings: "tnum"; }
+
+    .empty { padding: 48px 0; color: var(--t-tertiary); text-align: center; font-style: italic; }
+
+    .lb-hint {
+        background: var(--s-warning-bg);
+        border-radius: var(--r-lg);
+        padding: 14px 18px;
+        margin-top: 16px;
+    }
+    .lb-hint-l { font-size: 11px; color: var(--s-warning-fg); margin: 0 0 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .lb-hint-v { font-size: 14px; color: var(--t-primary); margin: 0; font-weight: 500; }
+    .lb-hint-v strong { color: var(--accent); }
+
+    .lb-foot { margin-top: 24px; }
+</style>
+{% endblock %}
