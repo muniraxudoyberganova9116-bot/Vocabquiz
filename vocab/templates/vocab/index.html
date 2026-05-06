@@ -29,22 +29,6 @@
         {% endif %}
     </div>
 
-    {% if user.is_authenticated %}
-    <div class="stats-row">
-        <div class="stat tint-accent">
-            <span class="stat-label">Total XP</span>
-            <span class="stat-value xp">{{ profile.total_score }}</span>
-        </div>
-        <div class="stat tint-success">
-            <span class="stat-label">Words mastered</span>
-            <span class="stat-value success">{{ profile.words_mastered }}</span>
-        </div>
-        <div class="stat tint-info">
-            <span class="stat-label">Units completed</span>
-            <span class="stat-value info">{{ completed_units }}<span class="stat-frac">/{{ total_units }}</span></span>
-        </div>
-    </div>
-    {% endif %}
 </section>
 
 <section class="features-wrap">
