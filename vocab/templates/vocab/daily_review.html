@@ -56,6 +56,34 @@
     .dr-btn-ok { }
     .dr-btn-easy { }
     #dr-reveal-btn { margin: 0 auto; display: block; }
+
+    .fc-mount { display: flex; justify-content: center; perspective: 1500px; width: 100%; }
+    .flip-card {
+        position: relative; width: min(540px, 100%); height: 280px; cursor: pointer;
+        transform-style: preserve-3d;
+        transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .flip-card.flipped { transform: rotateY(180deg); }
+    .face {
+        position: absolute; inset: 0; backface-visibility: hidden;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 10px; padding: 32px;
+        border-radius: var(--r-lg);
+    }
+    .face.front { background: var(--accent); color: #FBE9E0; border: 0.5px solid var(--accent); }
+    .face.back { transform: rotateY(180deg); background: var(--bg-2); color: var(--t-primary); border: 0.5px solid var(--b-tertiary); }
+    .face.front .pos { color: rgba(251, 233, 224, 0.75); }
+    .face.front .word { color: #FFFFFF; }
+    .face.front .cue { color: rgba(251, 233, 224, 0.75); }
+    .face .pos { font-size: 12px; font-style: italic; margin: 0; }
+    .face .word { font-family: var(--serif); font-weight: 500; font-size: 52px; line-height: 1.1; letter-spacing: -0.025em; margin: 0; text-align: center; }
+    .face .cue { font-size: 12px; color: var(--t-tertiary); margin: 0; }
+    .face.back .word-small { font-size: 28px; margin: 0; }
+    .face.back .definition { font-family: var(--sans); font-size: 15px; color: var(--t-secondary); text-align: center; line-height: 1.6; max-width: 420px; margin: 0; }
+    .back-header { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .back-ipa { font-family: var(--mono); font-size: 13px; color: var(--t-tertiary); margin: 0; }
+    .back-pos { font-family: var(--sans); font-size: 11px; font-style: italic; color: var(--accent); font-weight: 500; }
+    .back-example { font-family: var(--sans); font-size: 13px; font-style: italic; color: var(--t-tertiary); text-align: center; max-width: 380px; margin: 0; line-height: 1.5; }
 </style>
 
 <script>
